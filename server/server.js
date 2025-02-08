@@ -1,17 +1,19 @@
-// Import Express module
 const express = require('express');
+const cors = require("cors")
+const ytapis = require("./routes/ytapis.js");
 
 // Initialize an Express app
 const app = express();
 
+
 // Middleware to parse JSON requests
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cors())
 
-// Define a route for the home page
-app.get('/', (req, res) => {
-  res.send('Hello, World!');
-});
 
+//Routes
+app.use('/ytapis', ytapis)
 
 
 
