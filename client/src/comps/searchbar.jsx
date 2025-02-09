@@ -16,6 +16,11 @@ export default function SearchBar({ value, onChange, onSearch, onCancel }){
   }
   
   
+
+
+  
+  
+  
   
   return (
   <>

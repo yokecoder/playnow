@@ -1,4 +1,5 @@
 const ytdl = require('@distube/ytdl-core');
+const ytpl = require("ytpl");
 const express = require('express');
 const fs = require("fs");
 
@@ -108,25 +109,67 @@ router.get('/fastdl', async (req, res) => {
   }
 });
 
+
+router.post("/playlistinfo", async (req, res)=> {
+  const url = req.body.url
+  try {
+    const playlist = await ytpl(url);
+    res.json(playlist)
+  } catch (error) {
+    console.error("Error fetching playlist details:", error.message);
+    res.json({status:false,error})
+  }
+});
+
 router.get('/stream', async (req, res) => {
-    const { url } = req.query;
-
-    if (!url) {
-        return res.status(400).json({ error: 'Missing YouTube URL' });
-    }
-
     try {
-        res.setHeader('Content-Type', 'video/mp4');
+        const { url, resolution = "360p" } = req.query;
+        if (!url) return res.status(400).send('Missing video URL');
 
-        const stream = ytdl(url, {
-            quality: 'highestvideo', // Adjust quality as needed
-            filter: 'videoandaudio'
-        });
-        stream.pipe(res);
+        // Get video info and select format
+        const info = await ytdl.getInfo(url);
+        const format = ytdl.chooseFormat(info.formats, { qualityLabel: resolution });
+
+        if (!format || !format.url) return res.status(404).send('No suitable format found');
+
+        const videoUrl = format.url;
+        const range = req.headers.range;
+
+        if (range) {
+            const videoSize = parseInt(format.contentLength) || 10 ** 8; // Estimate size if unknown
+            const CHUNK_SIZE = 1 * 1024 * 1024; // 1MB chunks
+            const start = Number(range.replace(/\D/g, ''));
+            const end = Math.min(start + CHUNK_SIZE, videoSize - 1);
+
+            res.writeHead(206, {
+                'Content-Range': `bytes ${start}-${end}/${videoSize}`,
+                'Accept-Ranges': 'bytes',
+                'Content-Length': end - start + 1,
+                'Content-Type': 'video/mp4',
+            });
+
+            // Stream only the requested range from YouTube
+            ytdl(url, {
+                quality: format.itag,
+                range: { start, end }
+            }).pipe(res);
+        } else {
+            res.writeHead(200, {
+                'Content-Length': format.contentLength || 10 ** 8,
+                'Content-Type': 'video/mp4',
+            });
+
+            ytdl(url, { quality: format.itag }).pipe(res);
+        }
     } catch (error) {
-        console.error('Streaming Error:', error);
-        res.status(500).json({ error: 'Failed to stream video' });
+        console.error(error);
+        res.status(500).send('Error streaming video');
     }
 });
+
+
+
+
+
 
 module.exports = router;

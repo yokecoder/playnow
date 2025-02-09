@@ -4,6 +4,9 @@
   --primary-bg-color: #f5f4f4fa;
   --topnav-box-shadow: 0px 5px 5px rgba(0, 0, 0, 0.4);
   --btmnav-box-shadow: 0px 2px 5px 5px rgba(1, 1, 1, 0.4);
+  --transition: background-color 0.25s, color 0.25s;
+  
+  
 }
 
 
@@ -13,6 +16,8 @@
   --primary-bg-color: #111111 ;
   --topnav-box-shadow: 0px 5px 5px rgba(1, 1, 1, 0.8);
   --btmnav-box-shadow: 0px 2px 5px 5px rgba(1, 1, 1, 0.8);
+  --transition: background-color 0.25s, color 0.25s;
+  
   
 }
 
@@ -22,7 +27,7 @@ body {
   margin: 0;
   background-color: var(--background-color);
   color: var(--text-color);
-  transition: background-color 0.25s, color 0.25s;
+  transition: var(--transition) ;
   height: auto;
   overflow: hidden;
   font-family: Poppins;
@@ -52,9 +57,11 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 10px;
+  
   background-color: var(--primary-bg-color);
   box-shadow: var(--topnav-box-shadow);
   z-index: 100;
+  transition: var(--transition);
 }
 .topnav-icon-btn {
   color: var(--text-color) !important;
@@ -76,6 +83,7 @@ body {
   background-color: var(--primary-bg-color);
   box-shadow: var(--btmnav-box-shadow);
   z-index: 100;
+  transition: var(--transition);
 }
 .bottom-nav-icon {
   color: var(--text-color) !important;
@@ -127,21 +135,62 @@ body {
 .icon-btn.hidden {
   display: none !important;
 }
-.search-results {
-  flex: 0 1 auto;
+
+.video-container {
+  flex: 1 1 auto;
   display: flex;
+  gap: 15px;
   flex-direction: column;
+  align-items: center;
   height: auto;
   max-height: 65vh;
   overflow: auto;
   text-align: center;
   padding: 10px;
-  background-color: red;
+  padding-bottom: 30px;
+  margin-bottom: 50px;
+  
+  
+}
+p {
+  text-align: center;
+  font-size: 22px;
+  margin: 10px;
+}
+.video-player {
+  display: flex;
+  flex-direction: column;
+  padding: 5px ;
+  
+  background-color: var(--primary-bg-color);
+  border-radius: 8px;
+  box-shadow: var(--topnav-box-shadow);
+}
+
+.player-actions {
+  display: flex;
+  justify-content: space-around;
+  padding: 5px;
+  padding-top: 8px;
+  
   
 }
 
 .link {
   text-decoration: none;
-  
 }
+.player-act-button {
+  color: var(--text-color);
+  background-color: var(--primary-bg-color);
+  border: none ;
+  font-size: 20px;
+}
+.player-format-select {
+  color: var(--text-color);
+  background-color: var(--primary-bg-color);
+  font-size: 16px;
+  border:none;
+  outline: none;
+}
+
 

@@ -4,16 +4,15 @@
   "main": "index.js",
   "scripts": {
     "start": "concurrently \"npm run server\" \"npm run client\"",
-    "client": "cd client && npm run dev", 
-    "server": "cd server && nodemon server.js"  
-  }
-
-  ,
+    "client": "cd client && npm run dev",
+    "server": "cd server && nodemon server.js"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "dotenv": "^16.4.7",
     "nodemon": "^3.1.9"
   },
   "devDependencies": {
