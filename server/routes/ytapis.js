@@ -5,13 +5,32 @@ const fs = require("fs");
 
 const router = express.Router();
 
+router.get('/info', async (req, res) => {
+  try {
+    const { url } = req.query;
+    if (!url) {
+      return res.status(400).json({ error: 'URL parameter is required' });
+    }
 
-router.get('/info', async (req, res)=> {
-  const {url} = req.query;
-  
-  const info = await ytdl.getInfo(url)
-  res.json(info)
+    // Set a proxy IP in headers
+    const options = {
+      requestOptions: {
+        headers: {
+          'X-Forwarded-For': '20.210.113.32', // Replace with a working proxy IP
+        },
+      },
+    };
+
+    const info = await ytdl.getInfo(url, options);
+    res.json(info);
+  } catch (error) {
+    console.error('Error fetching video info:', error.message);
+    res.status(500).json({ error: 'Failed to retrieve video info', details: error.message });
+  }
 });
+
+
+
 
 router.post('/basicinfo', async (req, res)=>{
   const url = req.body.url
