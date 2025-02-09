@@ -60,7 +60,7 @@ router.get('/dl', async (req, res)=> {
         qualityLabel: format === 'video' ? resolution : '',
     }).pipe(res)
   } catch (error) {
-    res.status(400).json({status:false, msg:'Internal Server Error'})
+    res.status(400).json({status:false, msg:'Internal Server Error', error})
   }
   //res.status(200).json({staus:true,msg:'download completed'})
   
