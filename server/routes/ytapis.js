@@ -6,8 +6,8 @@ const fs = require("fs");
 const router = express.Router();
 
 
-router.post('/info', async (req, res)=> {
-  const {url} = req.body;
+router.get('/info', async (req, res)=> {
+  const {url} = req.query;
   
   const info = await ytdl.getInfo(url)
   res.json(info)
@@ -58,9 +58,10 @@ router.get('/dl', async (req, res)=> {
     ytdl(url, {
         filter: f =>  format === 'audio' ? f.hasAudio && !f.hasVideo : f.hasAudio && f.hasVideo,
         qualityLabel: format === 'video' ? resolution : '',
+        highWaterMark: 1024 * 1024 * 10
     }).pipe(res)
   } catch (error) {
-    res.status(400).json({status:false, msg:'Internal Server Error', error})
+    res.status(400).json({status:false, msg:'Internal Server Error'})
   }
   //res.status(200).json({staus:true,msg:'download completed'})
   
