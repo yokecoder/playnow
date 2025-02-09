@@ -12,16 +12,7 @@ router.get('/info', async (req, res) => {
       return res.status(400).json({ error: 'URL parameter is required' });
     }
 
-    // Set a proxy IP in headers
-    const options = {
-      requestOptions: {
-        headers: {
-          'X-Forwarded-For': '20.210.113.32', // Replace with a working proxy IP
-        },
-      },
-    };
-
-    const info = await ytdl.getInfo(url, options);
+    const info = await ytdl.getInfo(url);
     res.json(info);
   } catch (error) {
     console.error('Error fetching video info:', error.message);
@@ -52,13 +43,18 @@ router.post('/getformats', async (req, res)=> {
 });
 
 router.get('/dl', async (req, res)=> {
-  const  url = req.query.url;
-  const  format = req.query.fmt || "video" ;
-  const  resolution = req.query.res || "480p" ;
-
-  if (!url){
-    res.status(400).json({status:false, msg:'url not found'})
-  }
+  
+  
+    const url = req.query.url;
+    const format = req.query.fmt || "video" ;
+    const resolution = req.query.res || "480p" ;
+  
+    if (!url){
+      res.status(400).json({status:false, msg:'url not found'})
+    }
+    
+  
+    
   try {
     const videoInfo = await ytdl.getInfo(url)
     let videoTitle = videoInfo.videoDetails.title
@@ -77,13 +73,12 @@ router.get('/dl', async (req, res)=> {
     ytdl(url, {
         filter: f =>  format === 'audio' ? f.hasAudio && !f.hasVideo : f.hasAudio && f.hasVideo,
         qualityLabel: format === 'video' ? resolution : '',
-        highWaterMark: 1024 * 1024 * 10
+        highWaterMark: 1024 * 1024 * 10,
     }).pipe(res)
   } catch (error) {
-    res.status(400).json({status:false, msg:'Internal Server Error'})
+    res.status(400).json({status:false, msg:'Internal Server Error', details: error.message})
   }
-  //res.status(200).json({staus:true,msg:'download completed'})
-  
+
 });
 
 router.get('/fastdl', async (req, res) => {

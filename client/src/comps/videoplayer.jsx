@@ -9,8 +9,7 @@ const YtPlayer = ({ url }) => {
   const [format, setFormat] = useState('video');
   const [resolution, setResolution] = useState('480p');
   const apiUrl = `http://localhost:3000/ytapis/dl?url=${encodeURIComponent(url)}&fmt=${format}&res=${resolution}`;
-  const playUrl = `http://localhost:3000/ytapis/stream?url=${encodeURIComponent(url)}&resolution=${resolution}`
-  
+
   
   return (
     <>
