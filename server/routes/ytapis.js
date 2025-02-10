@@ -15,9 +15,9 @@ const youtubeHeadersMiddleware = (req, res, next) => {
   req.ytdlOptions = {
     requestOptions: {
       headers: {
-        'User-Agent': randomUserAgents[Math.floor(Math.random() * randomUserAgents.length)],
+        'User Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36',
         'Referer': 'https://www.youtube.com/',
-        'Cookie': 'VISITOR_INFO1_LIVE=nrnqF94d6Xo; YSC=5TOsX078PZU; PREF=tz=Asia.Calcutta',
+        'Cookie': 'VISITOR_INFO1_LIVE=OgRU3YHghK8; YSC=gb2dKlvocOs; PREF=tz=Asia.Calcutta',
         'Accept-Language': 'en-US,en;q=0.9',
         'Connection': 'keep-alive'
       },
