@@ -6,18 +6,25 @@ const fs = require("fs");
 const router = express.Router();
 
 router.get('/info', async (req, res) => {
-  try {
+
     const { url } = req.query;
     if (!url) {
       return res.status(400).json({ error: 'URL parameter is required' });
     }
+    const options = {
+      requestOptions: {
+        headers: {
+          Cookie: 'VISITOR_INFO1_LIVE=nrnqF94d6Xo; YSC=5TOsX078PZU; PREF=tz=Asia.Calcutta',
+        },
+      },
+    };
 
-    const info = await ytdl.getInfo(url);
+    const info = await ytdl.getInfo(url, options);
     res.json(info);
-  } catch (error) {
+  /*} catch (error) {
     console.error('Error fetching video info:', error.message);
     res.status(500).json({ error: 'Failed to retrieve video info', details: error.message });
-  }
+  }*/
 });
 
 
