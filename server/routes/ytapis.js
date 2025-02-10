@@ -5,13 +5,30 @@ const fs = require("fs");
 
 const router = express.Router();
 
+
+const youtubeHeadersMiddleware = (req, res, next) => {
+  req.ytdlOptions = {
+    requestOptions: {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': 'https://www.youtube.com/',
+        'Cookie': 'VISITOR_INFO1_LIVE=nrnqF94d6Xo; YSC=5TOsX078PZU; PREF=tz=Asia.Calcutta',
+      },
+    },
+  };
+  next();
+};
+
+
+router.use('/ytapis', youtubeHeadersMiddleware);
+
 router.get('/info', async (req, res) => {
 
     const { url } = req.query;
     if (!url) {
       return res.status(400).json({ error: 'URL parameter is required' });
     }
-    const options = {
+    /*const options = {
       requestOptions: {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -19,10 +36,10 @@ router.get('/info', async (req, res) => {
           'Cookie': 'VISITOR_INFO1_LIVE=nrnqF94d6Xo; YSC=5TOsX078PZU; PREF=tz=Asia.Calcutta',
         },
       },
-    };
+    };*/
     
 
-    const info = await ytdl.getInfo(url, options);
+    const info = await ytdl.getInfo(url, req.ytdlOptions);
     res.json(info);
   /*} catch (error) {
     console.error('Error fetching video info:', error.message);
