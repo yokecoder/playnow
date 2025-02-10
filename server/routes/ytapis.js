@@ -17,7 +17,7 @@ const youtubeHeadersMiddleware = (req, res, next) => {
       headers: {
         'User-Agent': randomUserAgents[Math.floor(Math.random() * randomUserAgents.length)],
         'Referer': 'https://www.youtube.com/',
-        'Cookie': 'VISITOR_INFO1_LIVE=your_updated_value; YSC=your_updated_value; PREF=your_updated_value',
+        'Cookie': 'VISITOR_INFO1_LIVE=nrnqF94d6Xo; YSC=5TOsX078PZU; PREF=tz=Asia.Calcutta',
         'Accept-Language': 'en-US,en;q=0.9',
         'Connection': 'keep-alive'
       },
