@@ -14,10 +14,13 @@ router.get('/info', async (req, res) => {
     const options = {
       requestOptions: {
         headers: {
-          Cookie: 'VISITOR_INFO1_LIVE=nrnqF94d6Xo; YSC=5TOsX078PZU; PREF=tz=Asia.Calcutta',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Referer': 'https://www.youtube.com/',
+          'Cookie': 'VISITOR_INFO1_LIVE=nrnqF94d6Xo; YSC=5TOsX078PZU; PREF=tz=Asia.Calcutta',
         },
       },
     };
+    
 
     const info = await ytdl.getInfo(url, options);
     res.json(info);
