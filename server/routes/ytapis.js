@@ -22,55 +22,45 @@ const youtubeHeadersMiddleware = (req, res, next) => {
 
 router.use('/ytapis', youtubeHeadersMiddleware);
 
+// Return all the data fectched
 router.get('/info', async (req, res) => {
-
+  try {
     const { url } = req.query;
     if (!url) {
       return res.status(400).json({ error: 'URL parameter is required' });
     }
-    /*const options = {
-      requestOptions: {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Referer': 'https://www.youtube.com/',
-          'Cookie': 'VISITOR_INFO1_LIVE=nrnqF94d6Xo; YSC=5TOsX078PZU; PREF=tz=Asia.Calcutta',
-        },
-      },
-    };*/
-    
 
     const info = await ytdl.getInfo(url, req.ytdlOptions);
     res.json(info);
-  /*} catch (error) {
+    
+  } catch (error) {
     console.error('Error fetching video info:', error.message);
     res.status(500).json({ error: 'Failed to retrieve video info', details: error.message });
-  }*/
+  }
 });
 
-
-
-
+//Returns  only needed information
 router.post('/basicinfo', async (req, res)=>{
   const url = req.body.url
   if (!url) {
     res.status(400).json({status:false, msg:"missing url"})
   }
-  const info = await ytdl.getInfo(url)
+  const info = await ytdl.getInfo(url, req.ytdlOptions)
   res.json(info.videoDetails)
-  
 });
 
+//Returns Available formats
 router.post('/getformats', async (req, res)=> {
   const url = req.body.url
   if (!url) {
     res.status(400).json({status:false, msg:"missing url"})
   }
-  const info = await ytdl.getInfo(url)
+  const info = await ytdl.getInfo(url, req.ytdlOptions)
   res.json(info.formats)
 });
 
+//Direct downnload Url
 router.get('/dl', async (req, res)=> {
-  
   
     const url = req.query.url;
     const format = req.query.fmt || "video" ;
@@ -79,8 +69,6 @@ router.get('/dl', async (req, res)=> {
     if (!url){
       res.status(400).json({status:false, msg:'url not found'})
     }
-    
-  
     
   try {
     const videoInfo = await ytdl.getInfo(url)
@@ -101,6 +89,7 @@ router.get('/dl', async (req, res)=> {
         filter: f =>  format === 'audio' ? f.hasAudio && !f.hasVideo : f.hasAudio && f.hasVideo,
         qualityLabel: format === 'video' ? resolution : '',
         highWaterMark: 1024 * 1024 * 10,
+        ...req.ytdlOptions
     }).pipe(res)
   } catch (error) {
     res.status(400).json({status:false, msg:'Internal Server Error', details: error.message})
@@ -108,6 +97,7 @@ router.get('/dl', async (req, res)=> {
 
 });
 
+//Direct Download starts immediately without fetch video info
 router.get('/fastdl', async (req, res) => {
   try {
     const url = req.query.url;
@@ -122,6 +112,7 @@ router.get('/fastdl', async (req, res) => {
     const stream = ytdl(url, {
       filter: f =>  format === 'audio' ? f.hasAudio && !f.hasVideo : f.hasAudio && f.hasVideo,
       qualityLabel: format === 'video' ? resolution : '',
+      ...req.ytdlOptions
     });
 
     // Set headers after stream starts (faster response)
@@ -152,6 +143,7 @@ router.get('/fastdl', async (req, res) => {
 });
 
 
+//information About a Playlist Url
 router.post("/playlistinfo", async (req, res)=> {
   const url = req.body.url
   try {
@@ -163,6 +155,8 @@ router.post("/playlistinfo", async (req, res)=> {
   }
 });
 
+
+//api for streaming allows to play third-party restricted videos 
 router.get('/stream', async (req, res) => {
     try {
         const { url, resolution = "360p" } = req.query;
@@ -193,7 +187,8 @@ router.get('/stream', async (req, res) => {
             // Stream only the requested range from YouTube
             ytdl(url, {
                 quality: format.itag,
-                range: { start, end }
+                range: { start, end },
+                ...req.ytdlOptions
             }).pipe(res);
         } else {
             res.writeHead(200, {
