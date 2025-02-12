@@ -32,10 +32,8 @@ router.get('/info', async (req, res) => {
     if (!url) {
       return res.status(400).json({ error: 'Url parameter is required' });
     }
-
     const info = await ytdl.getInfo(url, req.ytdlOptions);
     res.json(info);
-    
   } catch (error) {
     console.error('Error fetching video info:', error.message);
     res.status(500).json({ error: 'Failed to retrieve video info', details: error.message });
