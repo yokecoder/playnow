@@ -68,6 +68,19 @@ body {
   height: 30px !important;
   width: 30px !important;
 }
+.app-title {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.title-icon {
+  
+}
+.title-text {
+  font-size: 20px;
+}
+
 .bottom-nav {
   flex: 0 0 auto ;
   display: flex;
