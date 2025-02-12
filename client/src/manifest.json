@@ -1,0 +1,18 @@
+{
+  "short_name": "PlayNow",
+  "name": "PlayNow Streaming App",
+  "icons": [
+    {
+      "src": "./assets/file-RcN3rh6FcsMCoTS9i3KNUn.webp",
+      "type": "image/webp",
+      "sizes": "192x192"
+    },
+    {
+      "src": "./assets/file-XaacYyMQMmhScasFZeYkVg.webp",
+      "type": "image/webp",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone"
+}
