@@ -2,6 +2,8 @@ const ytdl = require('@distube/ytdl-core');
 const ytpl = require("ytpl");
 const express = require('express');
 const fs = require("fs");
+const axios = require("axios");
+
 
 const router = express.Router();
 
@@ -70,7 +72,6 @@ router.get('/dl', async (req, res)=> {
         .substring(0, 100)                      // Limit length to 100 characters
         .trim();
     let ext = format === "audio" ? "mp3" : "mp4" ;
-        
     let filename = `${videoTitle}.${ext}`
     //res.header('Content-Type', format === "video" ? "video/mp4" : "audio/webm")
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
@@ -100,56 +101,61 @@ router.post("/playlistinfo", async (req, res)=> {
   }
 });
 
-router.get("")
+
+
+router.get("/search", async (req, res) => {
+  const query = req.query.query;
+  const api_key = process.env.YT_APIKEY2;
+  
+  if (!query) {
+    return res.status(400).json({ error: "Query parameter 'query' is required" });
+  }
+
+  try {
+    const response = await axios.get("https://www.googleapis.com/youtube/v3/search", {
+      params: {
+        part: "snippet",
+        q: query,
+        maxResults: 10,
+        type: "video,playlist",
+        key: api_key,
+      },
+    });
+
+    /*const results = response.data.items.map((item) => ({
+      title: item.snippet.title,
+      videoId: item.id.videoId,
+      url: `https://www.youtube.com/watch?v=${item.id.videoId}`,
+      channelTitle: item.snippet.channelTitle,
+      thumbnail: item.snippet.thumbnails.default.url,
+    }));*/
+   
+    res.json(response.data.items);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch search results", details: error.message });
+  }
+});
 
 
 
 
 //api for streaming allows to play third-party restricted videos 
-router.get('/stream', async (req, res) => {
+router.get("/stream", async (req, res) => {
     try {
         const { url, resolution = "360p" } = req.query;
-        if (!url) return res.status(400).send('Missing video URL');
+        if (!url) return res.status(400).send("Missing video URL");
 
-        // Get video info and select format
         const info = await ytdl.getInfo(url);
         const format = ytdl.chooseFormat(info.formats, { qualityLabel: resolution });
+        if (!format) return res.status(404).send("No suitable format found");
 
-        if (!format || !format.url) return res.status(404).send('No suitable format found');
+        res.setHeader("Content-Type", "video/mp4");
+        if (format.contentLength) res.setHeader("Content-Length", format.contentLength);
 
-        const videoUrl = format.url;
-        const range = req.headers.range;
-
-        if (range) {
-            const videoSize = parseInt(format.contentLength) || 10 ** 8; // Estimate size if unknown
-            const CHUNK_SIZE = 1 * 1024 * 1024; // 1MB chunks
-            const start = Number(range.replace(/\D/g, ''));
-            const end = Math.min(start + CHUNK_SIZE, videoSize - 1);
-
-            res.writeHead(206, {
-                'Content-Range': `bytes ${start}-${end}/${videoSize}`,
-                'Accept-Ranges': 'bytes',
-                'Content-Length': end - start + 1,
-                'Content-Type': 'video/mp4',
-            });
-
-            // Stream only the requested range from YouTube
-            ytdl(url, {
-                quality: format.itag,
-                range: { start, end },
-                ...req.ytdlOptions
-            }).pipe(res);
-        } else {
-            res.writeHead(200, {
-                'Content-Length': format.contentLength || 10 ** 8,
-                'Content-Type': 'video/mp4',
-            });
-
-            ytdl(url, { quality: format.itag }).pipe(res);
-        }
+        ytdl.downloadFromInfo(info, { quality: format.itag }).pipe(res);
     } catch (error) {
-        console.error(error);
-        res.status(500).send('Error streaming video');
+        console.error("Streaming Error:", error.message);
+        res.status(500).send("Error streaming video");
     }
 });
 

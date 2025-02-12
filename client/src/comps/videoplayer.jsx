@@ -9,7 +9,7 @@ const YtPlayer = ({ url }) => {
   const [format, setFormat] = useState('video');
   const [resolution, setResolution] = useState('480p');
   const apiUrl = `https://server-playnow-production.up.railway.app/ytapis/dl?url=${encodeURIComponent(url)}&fmt=${format}&res=${resolution}`;
-
+  //const streamUrl = `http://localhost:3000/ytapis/stream?url=${encodeURIComponent(url)}`
   
   return (
     <>
@@ -24,8 +24,7 @@ const YtPlayer = ({ url }) => {
           rtl={false} 
           pauseOnFocusLoss
           theme="dark" />
-          
-          
+      
         <ReactPlayer url={url} controls height="180px"  width="320px" />
         <div className="player-actions">
          
@@ -33,7 +32,7 @@ const YtPlayer = ({ url }) => {
             <option value="audio">Audio</option>
             <option value="video">Video</option>
           </select>
-        
+
           {format === "video" && (
             <select className="player-format-select" value={resolution} onChange={(e) => setResolution(e.target.value)}>
               <option value="144p">144p</option>
@@ -46,15 +45,7 @@ const YtPlayer = ({ url }) => {
           )}
           
           <a  className="link player-act-button" href={apiUrl} onClick={() => {toast("Starting Download....");}} >Download</a>
-          
-                  
-          
-          
-          
-          
         </div>
-        
-      
       </div>
     </>
     

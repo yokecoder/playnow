@@ -183,6 +183,7 @@ p {
 .player-actions {
   display: flex;
   justify-content: space-around;
+  align-items: center;
   padding: 5px;
   padding-top: 8px;
   
@@ -198,12 +199,21 @@ p {
   border: none ;
   font-size: 20px;
 }
+.fmt-slt-inp-label {
+  color: var(--text-color) !important;
+  text-align: center !important;
+  font-size: 4px;
+  
+}
 .player-format-select {
-  color: var(--text-color);
-  background-color: var(--primary-bg-color);
-  font-size: 16px;
-  border:none;
-  outline: none;
+  color: var(--text-color) !important;
+  background-color: var(--primary-bg-color) !important;
+  font-size: 16px !important;
+  padding: 0px !important;
+  margin: 0px !important;
+  border:none !important;
+  outline: none !important;
+  height: 25px !important;
 }
 
 

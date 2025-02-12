@@ -27,14 +27,23 @@ export default function Yt(){
   const fetchPlaylist = async () => {
     
     if (!isLink() && !isPlaylist()) { return }
-    console.log("running api")
-    let playlistInfoApi = "http://localhost:3000/ytapis/playlistinfo"
+    let playlistInfoApi = "https://server-playnow-production.up.railway.app/ytapis/playlistinfo"
     let response = await axios.post(playlistInfoApi, {url:search})
     setVideoQueue([])
     if (response && !response.data.status){
       setVideoQueue(response.data.items)
     }
-    
+  }
+  // Fetch videos based on search
+  const fetchQuery = async () => {
+    if (search && !isLink()) {
+      let searchQuery = `https://server-playnow-production.up.railway.app/ytapis/search?query=${search}`
+      let response = await axios.get(searchQuery)
+      setVideoQueue([])
+      if (response && !response.data.status){
+        setVideoQueue(response.data)
+      }
+    } else { return }
   }
   
   /* used to fetch multiple videos either 
@@ -44,6 +53,9 @@ export default function Yt(){
     if (search && isLink() && isPlaylist()) {
       fetchPlaylist();
     }
+    else if (search && !isLink()){
+      fetchQuery();
+    }
   }, [search]);
   
   /*loades multiple videos smoothly */
@@ -51,32 +63,27 @@ export default function Yt(){
     if (loadedCount < videoQueue.length) {
       const timer = setTimeout(() => {
         setLoadedCount((prev) => prev + 1);
-      }, 500); // Adjust delay as needed
+      }, 250); // Adjust delay as needed
   
       return () => clearTimeout(timer);
     }
  }, [loadedCount, videoQueue]);
 
-  
-  
-  
-  
+
   return (
   <>
     <div>
       
-      {/**/}
+      {/* Search Bar for Youtube videos */}
       <SearchBar value={search} onChange={setSearch} onCancel={() => setSearch("")} onSearch={() => {
+        
         if (search && !isLink()){
-          console.log(search)
+          fetchQuery()
         }
         else if (search && isLink() && isPlaylist()) {
           fetchPlaylist()
-          console.log(videoQueue)
         }
       } } />
-      
-      
       
       <div className="video-container">
       {!search && <p>Search Videos or Paste Video Link to Get Started !!</p>}
@@ -103,8 +110,13 @@ export default function Yt(){
       
       {search && !isLink() && (
        <>
-        <p>Fetching Results...</p>
+        <p>Crunching results...</p>
         
+        {videoQueue.length > 0 &&
+          videoQueue.slice(0,loadedCount).map((video) => (
+              <YtPlayer url={video.id.playlistId ? `https://youtube.com/playlist?list=${video.id.playlistId}`  : `https://youtube.com/watch?v=${video.id.videoId}`} />
+          ))
+        } 
        </>
       )}
         
