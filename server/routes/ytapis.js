@@ -105,7 +105,7 @@ router.post("/playlistinfo", async (req, res)=> {
 
 router.get("/search", async (req, res) => {
   const query = req.query.query;
-  const api_key = process.env.YT_APIKEY2;
+  const api_key = process.env.YT_APIKEY;
   
   if (!query) {
     return res.status(400).json({ error: "Query parameter 'query' is required" });
