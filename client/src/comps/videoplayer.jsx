@@ -5,7 +5,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 const YtPlayer = ({ url }) => {
-  
+  ///const [isReady, setIsReady] = useState(false);
   const [format, setFormat] = useState('video');
   const [resolution, setResolution] = useState('480p');
   const apiUrl = `https://server-playnow-production.up.railway.app/ytapis/dl?url=${encodeURIComponent(url)}&fmt=${format}&res=${resolution}`;
@@ -25,7 +25,7 @@ const YtPlayer = ({ url }) => {
           pauseOnFocusLoss
           theme="dark" />
       
-        <ReactPlayer url={url} controls height="180px"  width="320px" />
+        <ReactPlayer url={ url  } controls height="180px"  width="320px" />
         <div className="player-actions">
          
           <select className="player-format-select" value={format} onChange={(e) => setFormat(e.target.value)}>
