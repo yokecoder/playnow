@@ -1,14 +1,14 @@
 const ytdl = require('@distube/ytdl-core');
 const ytpl = require("ytpl");
 const express = require('express');
-const fs = require("fs");
 const axios = require("axios");
 
 
 const router = express.Router();
 
 
-
+/* Middleware used to bypass youtubes bot detection
+algorithm on multiple requests */
 const youtubeHeadersMiddleware = (req, res, next) => {
   req.ytdlOptions = {
     requestOptions: {
@@ -102,6 +102,8 @@ router.post("/playlistinfo", async (req, res)=> {
 });
 
 
+//Api for searching through youtube search
+//Uses Youtube Data Api v3 to findout searches
 
 router.get("/search", async (req, res) => {
   const query = req.query.query;
@@ -121,22 +123,12 @@ router.get("/search", async (req, res) => {
         key: api_key,
       },
     });
-
-    /*const results = response.data.items.map((item) => ({
-      title: item.snippet.title,
-      videoId: item.id.videoId,
-      url: `https://www.youtube.com/watch?v=${item.id.videoId}`,
-      channelTitle: item.snippet.channelTitle,
-      thumbnail: item.snippet.thumbnails.default.url,
-    }));*/
-   
+    
     res.json(response.data.items);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch search results", details: error.message });
   }
 });
-
-
 
 
 //api for streaming allows to play third-party restricted videos 
@@ -158,9 +150,6 @@ router.get("/stream", async (req, res) => {
         res.status(500).send("Error streaming video");
     }
 });
-
-
-
 
 
 

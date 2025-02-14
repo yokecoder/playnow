@@ -6,7 +6,7 @@ import CloseIcon from "@mui/icons-material/Close";
 
 
 
-export default function SearchBar({ value, onChange, onSearch, onCancel }){
+export default function SearchBar({ value, hint,  onChange, onSearch, onCancel }){
   
   //Visiblity function for cancel icon 
   const [cancelIcon, setCancelIcon] = useState("hidden")
@@ -15,13 +15,6 @@ export default function SearchBar({ value, onChange, onSearch, onCancel }){
     setCancelIcon(visibility)
   }
   
-  
-
-
-  
-  
-  
-  
   return (
   <>
     <div className="search-container">
@@ -29,7 +22,7 @@ export default function SearchBar({ value, onChange, onSearch, onCancel }){
         <IconButton className={`icon-btn ${cancelIcon}`} onClick={onCancel} >
           <CloseIcon />
         </IconButton>
-        <input className="search-input-box" type="text" value={value} placeholder="search / paste video link"  onChange={(e) => onChange(e.target.value) } onKeyUp={showCancelIcon}/>
+        <input className="search-input-box" type="text" value={value} placeholder={hint}  onChange={(e) => onChange(e.target.value) } onKeyUp={showCancelIcon}/>
         <IconButton className="icon-btn" onClick={onSearch}>
           <SearchIcon />
         </IconButton>

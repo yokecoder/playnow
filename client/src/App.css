@@ -33,6 +33,7 @@ body {
   font-family: Poppins;
   
 }
+
 .app-layout {
   display: flex;
   flex-direction: column;
@@ -41,6 +42,7 @@ body {
   height: 100vh;
   overflow: auto;
 }
+
 .page-layout {
   display: flex;
   flex-direction: column;
@@ -49,6 +51,7 @@ body {
   padding-bottom: 6px;
   
 }
+
 .top-nav {
   position: sticky;
   top:0;
@@ -117,16 +120,18 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 100px ;
+  height: 85px ;
+  
 }
 .search-bar{
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
   align-items: center;
   color: var(--text-color);
   background-color: var(--primary-bg-color);
   border-radius: 12px;
   box-shadow: var(--topnav-box-shadow);
+ 
 }
 .search-input-box {
   color: inherit;
@@ -135,7 +140,8 @@ body {
   border: none;
   font-size: 1em;
   padding: 8px ;
-  max-width: 72%;
+  max-width: inherit;
+  border-radius: 12px;
 }
 .icon-btn {
   color: var(--text-color) !important;

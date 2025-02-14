@@ -1,8 +1,22 @@
+import { useState, useCallBack, useEffect } from "react";
+import SearchBar from "../comps/searchbar.jsx";
+
 export default function Music(){
+  
+  const [search, setSearch] = useState("")
+  
+  
+  
   return (
     <div>
-      <p>Music Streaming</p>
-      <p>Coming Soon!! We are working on it for a better experience</p>
+      <SearchBar
+        value={search}
+        hint="Search for songs,albums,artists"
+        onChange={setSearch}
+        onCancel={() => setSearch("")}
+      />
+      
+      
     </div>
   )
   

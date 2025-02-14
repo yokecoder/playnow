@@ -62,6 +62,7 @@ export default function Yt() {
       {/* Search Bar for YouTube Videos */}
       <SearchBar
         value={search}
+        hint="Search or Paste video link"
         onChange={setSearch}
         onCancel={() => setSearch("")}
         onSearch={() => (isLink() && isPlaylist() ? fetchPlaylist() : fetchQuery())}

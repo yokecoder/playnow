@@ -1,13 +1,14 @@
 const express = require('express');
-const cors = require("cors")
-require('dotenv').config()
+const cors = require("cors");
 const ytapis = require("./routes/ytapis.js");
+const musicapis = require("./routes/musicapis.js");
+require('dotenv').config()
+
 
 // Initialize an Express app
 const app = express();
 
-
-// Middleware to parse JSON requests
+// Middlewares  to parse JSON requests
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors())
@@ -15,6 +16,8 @@ app.use(cors())
 
 //Routes
 app.use('/ytapis', ytapis)
+app.use('/musicapis', musicapis)
+
 
 app.get("/", (req, res) => {
   res.send("Playnow --- Streaming on the Gooooo")
