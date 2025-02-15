@@ -188,12 +188,12 @@ router.get("/ytmusic/stream", async (req, res) => {
     // 🔹 Stream only the highest-quality audio instantly
     ytdl(url, { filter: "audioonly", quality: "highestaudio", highWaterMark: 32 * 1024 })  
       .on("error", (err) => {
-        console.error("❌ Stream Error:", err.message);
+        console.error("stream Error:", err.message);
         res.status(500).json({ error: "Failed to stream audio" });
       })
       .pipe(res);
   } catch (error) {
-    console.error("❌ Stream Error:", error.message);
+    console.error("Stream Error:", error.message);
     res.status(500).json({ error: "Failed to stream audio" });
   }
 });
