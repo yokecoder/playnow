@@ -7,7 +7,9 @@ export default function Yt() {
   const [search, setSearch] = useState(""); // Input value
   const [videoQueue, setVideoQueue] = useState([]); // Queue for multiple videos
   const [loadedCount, setLoadedCount] = useState(0); // Smooth loading control
-
+  
+  //const streamUrl = `http://localhost:3000/ytapis/stream?url=${encodeURIComponent(search)}&resolution=${resolution}`
+  
   // Memoized functions to determine search type
   const isLink = useCallback(() => /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(:\d+)?(\/\S*)?$/.test(search), [search]);
   const isPlaylist = useCallback(() => search.includes("list="), [search]);

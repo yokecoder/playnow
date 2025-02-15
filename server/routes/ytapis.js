@@ -133,22 +133,29 @@ router.get("/search", async (req, res) => {
 
 //api for streaming allows to play third-party restricted videos 
 router.get("/stream", async (req, res) => {
-    try {
-        const { url, resolution = "360p" } = req.query;
-        if (!url) return res.status(400).send("Missing video URL");
-
-        const info = await ytdl.getInfo(url);
-        const format = ytdl.chooseFormat(info.formats, { qualityLabel: resolution });
-        if (!format) return res.status(404).send("No suitable format found");
-
-        res.setHeader("Content-Type", "video/mp4");
-        if (format.contentLength) res.setHeader("Content-Length", format.contentLength);
-
-        ytdl.downloadFromInfo(info, { quality: format.itag }).pipe(res);
-    } catch (error) {
-        console.error("Streaming Error:", error.message);
-        res.status(500).send("Error streaming video");
+  try {
+    const { url, res: resolution = "480p" } = req.query;
+    if (!url || !ytdl.validateURL(url)) {
+      return res.status(400).json({ error: "Invalid or missing YouTube Music URL" });
     }
+
+    res.set({
+      "Content-Type": "video/mp4",
+      "Cache-Control": "no-cache",
+      "Connection": "keep-alive",
+      "Transfer-Encoding": "chunked",
+    });
+
+    ytdl(url, { qualityLabel:resolution , highWaterMark: 32 * 1024 })  
+      .on("error", (err) => {
+        console.error("Stream Error:", err.message);
+        res.status(500).json({ error: "Failed to stream video" });
+      })
+      .pipe(res);
+  } catch (error) {
+    console.error("Stream Error:", error.message);
+    res.status(500).json({ error: "Failed to stream video" });
+  }
 });
 
 
