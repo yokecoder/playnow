@@ -5,10 +5,7 @@
   --topnav-box-shadow: 0px 5px 5px rgba(0, 0, 0, 0.4);
   --btmnav-box-shadow: 0px 2px 5px 5px rgba(1, 1, 1, 0.4);
   --transition: background-color 0.25s, color 0.25s;
-  
-  
 }
-
 
 :root[data-theme="dark"] {
   --background-color:#181818 ;
@@ -17,14 +14,13 @@
   --topnav-box-shadow: 0px 5px 5px rgba(1, 1, 1, 0.8);
   --btmnav-box-shadow: 0px 2px 5px 5px rgba(1, 1, 1, 0.8);
   --transition: background-color 0.25s, color 0.25s;
-  
-  
 }
 
 /* Apply Variables */
 body {
   
   margin: 0;
+  padding: 0;
   background-color: var(--background-color);
   color: var(--text-color);
   transition: var(--transition) ;
@@ -32,6 +28,34 @@ body {
   overflow: hidden;
   font-family: Poppins;
   
+}
+
+
+.loader-mini {
+  width: 30px;
+  height: 30px;
+  border: 5px solid var(--text-color);
+  border-top-color: var(--background-color); /* Primary color */
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.loader {
+  width: 50px;
+  height: 50px;
+  border: 5px solid var(--text-color);
+  border-top-color: var(--background-color); /* Primary color */
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .app-layout {
@@ -49,9 +73,9 @@ body {
   flex: 1 1 auto ;
   margin-bottom: 40px;
   padding-bottom: 6px;
-  
 }
 
+/*Styles for Top Navigation Bar*/
 .top-nav {
   position: sticky;
   top:0;
@@ -60,30 +84,25 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 10px;
-  
   background-color: var(--primary-bg-color);
   box-shadow: var(--topnav-box-shadow);
   z-index: 100;
   transition: var(--transition);
 }
-.topnav-icon-btn {
+.top-nav .topnav-icon-btn {
+  
   color: var(--text-color) !important;
-  height: 30px !important;
-  width: 30px !important;
+  height: 24px !important;
 }
-.app-title {
+.top-nav .app-title {
   display: flex;
   justify-content: center;
   align-items: center;
-}
-
-.title-icon {
-  
-}
-.title-text {
   font-size: 20px;
 }
 
+
+/* Styles for bottom navigation bar*/
 .bottom-nav {
   flex: 0 0 auto ;
   display: flex;
@@ -104,16 +123,18 @@ body {
 .bottom-nav-icon {
   color: var(--text-color) !important;
   height: 40px !important;
-  width: 50px !important;
+  width: 55px !important;
   transition: transform 0.25s ease-in-out !important;
 }
 .bottom-nav-icon:hover, .bottom-nav-icon:active {
   background-color: var(--background-color) !important;
   box-shadow: var(--btmnav-box-shadow) !important;
-  transform: translateY(-8px) !important;
+  transform: translateY(-10px) !important;
   border-radius: 8px !important;
 }
 
+
+/*Styles for Search Bar*/
 .search-container {
   flex: 0 0 auto;
   display: flex;
@@ -155,6 +176,7 @@ body {
   display: none !important;
 }
 
+/*Styles for Video Container*/
 .video-container {
   flex: 1 1 auto;
   display: flex;
@@ -176,11 +198,11 @@ p {
   font-size: 22px;
   margin: 10px;
 }
+/*Video Player Styles */
 .video-player {
   display: flex;
   flex-direction: column;
   padding: 5px ;
-  
   background-color: var(--primary-bg-color);
   border-radius: 8px;
   box-shadow: var(--topnav-box-shadow);
@@ -192,8 +214,6 @@ p {
   align-items: center;
   padding: 5px;
   padding-top: 8px;
-  
-  
 }
 
 .link {
@@ -209,7 +229,6 @@ p {
   color: var(--text-color) !important;
   text-align: center !important;
   font-size: 4px;
-  
 }
 .player-format-select {
   color: var(--text-color) !important;

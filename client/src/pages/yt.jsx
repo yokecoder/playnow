@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import SearchBar from "../comps/searchbar";
 import YtPlayer from "../comps/videoplayer";
 import axios from "axios";
@@ -7,49 +7,43 @@ export default function Yt() {
   const [search, setSearch] = useState(""); // Input value
   const [videoQueue, setVideoQueue] = useState([]); // Queue for multiple videos
   const [loadedCount, setLoadedCount] = useState(0); // Smooth loading control
+  const timeoutRef = useRef(null);
   
-  //const streamUrl = `http://localhost:3000/ytapis/stream?url=${encodeURIComponent(search)}&resolution=${resolution}`
-  
-  // Memoized functions to determine search type
+  //Check for link and playlists
   const isLink = useCallback(() => /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(:\d+)?(\/\S*)?$/.test(search), [search]);
   const isPlaylist = useCallback(() => search.includes("list="), [search]);
 
-  // Fetch all videos from a playlist
-  const fetchPlaylist = useCallback(async () => {
-    if (!isLink() || !isPlaylist()) return setVideoQueue([]);
+  // Fetch videos based on input type (Playlist or Search Query)
+  const fetchVideos = useCallback(async () => {
+    if (!search) return setVideoQueue([]);
+
+    const url = isLink() ? 
+      (isPlaylist() ? "ytapis/playlistinfo" : null) : 
+      `ytapis/search?query=${encodeURIComponent(search)}`;
+
+    if (!url) return;
 
     try {
-      const { data } = await axios.post("https://server-playnow-production.up.railway.app/ytapis/playlistinfo", { url: search });
-      if (!data.status) setVideoQueue(data.items);
+      const { data } = await axios({
+        method: isPlaylist() ? "POST" : "GET",
+        url: `https://server-playnow-production.up.railway.app/${url}`,
+        data: isPlaylist() ? { url: search } : undefined,
+      });
+
+      setVideoQueue(data.status ? [] : isPlaylist() ? data.items : data);
     } catch (error) {
-      console.error("Error fetching playlist:", error);
+      console.error("Error fetching videos:", error);
       setVideoQueue([]);
     }
   }, [search, isLink, isPlaylist]);
 
-  // Fetch videos based on search query
-  const fetchQuery = useCallback(async () => {
-    if (!search || isLink()) return setVideoQueue([]);
-
-    try {
-      const { data } = await axios.get(`https://server-playnow-production.up.railway.app/ytapis/search?query=${search}`);
-      if (!data.status) setVideoQueue(data);
-    } catch (error) {
-      console.error("Error fetching search results:", error);
-      setVideoQueue([]);
-    }
-  }, [search, isLink]);
-
-  // Effect to fetch results based on input
+  // Debounced search effect
   useEffect(() => {
-    const delay = setTimeout(() => {
-      if (isLink() && isPlaylist()) fetchPlaylist();
-      else if (search && !isLink()) fetchQuery();
-      else setVideoQueue([]);
-    }, 300); // Debounced search effect
+    clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(fetchVideos, 300);
 
-    return () => clearTimeout(delay); // Cleanup on re-render
-  }, [search, fetchPlaylist, fetchQuery, isLink, isPlaylist]);
+    return () => clearTimeout(timeoutRef.current);
+  }, [search, fetchVideos]);
 
   // Smooth video loading effect
   useEffect(() => {
@@ -61,29 +55,40 @@ export default function Yt() {
 
   return (
     <div>
-      {/* Search Bar for YouTube Videos */}
+      
       <SearchBar
         value={search}
         hint="Search or Paste video link"
         onChange={setSearch}
         onCancel={() => setSearch("")}
-        onSearch={() => (isLink() && isPlaylist() ? fetchPlaylist() : fetchQuery())}
+        onSearch={() => {
+          setVideoQueue([]);
+          fetchVideos();
+        }}
       />
 
       <div className="video-container">
         {!search && <p>Search videos or paste a video link to get started!</p>}
-
         {search && isLink() && !isPlaylist() && <YtPlayer url={search} />}
-
-        {search && isLink() && isPlaylist() && videoQueue.length > 0 && 
-          videoQueue.slice(0, loadedCount).map((video, index) => <YtPlayer key={index} url={video.shortUrl} />)}
-
-        {search && !isLink() && !isPlaylist() && (
+        {search && isLink() && isPlaylist() && (
           <>
-            <p>Crunching results...</p>
+            {!videoQueue.length && <div className="loader"></div>}
             {videoQueue.length > 0 &&
               videoQueue.slice(0, loadedCount).map((video, index) => (
-                <YtPlayer key={index} url={video.id.playlistId ? `https://youtube.com/playlist?list=${video.id.playlistId}` : `https://youtube.com/watch?v=${video.id.videoId}`} />
+                  <YtPlayer key={index} url={video.shortUrl} />
+              ))}
+          </>
+        )}
+        
+        {search && !isLink() && (
+          <>
+            {!videoQueue.length && <div className="loader"></div>}
+            {videoQueue.length > 0 &&
+              videoQueue.slice(0, loadedCount).map((video, index) => (
+                <YtPlayer 
+                  key={index} 
+                  url={video.id.playlistId ? `https://youtube.com/playlist?list=${video.id.playlistId}&autoplay=0` : `https://youtube.com/watch?v=${video.id.videoId}`} 
+                />
               ))}
           </>
         )}
