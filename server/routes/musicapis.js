@@ -1,13 +1,8 @@
-//TODO:create a playable api which can play audio track
-//TODO:write apis to fetch playlists, tracks, albums, artists
-//TODO:write api to create a own playlist of user 
-
 const express = require('express');
 const axios = require("axios");
 const play = require("play-dl");
 const ytdl = require('@distube/ytdl-core');
-const ffmpeg = require("fluent-ffmpeg");
-const stream = require("stream");
+
 
 
 
@@ -39,6 +34,7 @@ const authMiddleware = async (req, res, next) => {
     tokenExpiresAt = Date.now() + response.data.expires_in * 1000;
     req.authToken = TOKEN;
     next();
+    
   } catch (error) {
     console.error('Error fetching Spotify token:', error);
     res.status(500).json({ error: 'Spotify authentication failed' });
@@ -51,17 +47,17 @@ router.use(authMiddleware);
 /*This Route api handles  spotify web api endpoints dynamically*/
 router.get('/spotifyapi', async (req, res) => {
   try{
-        let { ep, ...queryParams } = req.query;
-        if (!ep) return res.status(400).json({ error: 'Missing endpoint parameter' });
+    let { ep, ...queryParams } = req.query;
+    if (!ep) return res.status(400).json({ error: 'Missing endpoint parameter' });
         
-        const apiUrl = `${process.env.SPOTIFY_API_URL}${ep}`;
+    const apiUrl = `${process.env.SPOTIFY_API_URL}${ep}`;
 
-        const response = await axios.get(apiUrl, {
-            headers: { Authorization: `Bearer ${req.authToken}` },
-            params: queryParams,
-        });
-        
-        res.json(response.data);
+    const response = await axios.get(apiUrl, {
+      headers: { Authorization: `Bearer ${req.authToken}` },
+      params: queryParams,
+    });
+    res.json(response.data);
+    
   } catch (error) {
     res.json({status:500, error:error.message})
   }
@@ -87,8 +83,7 @@ router.get("/ytmusic/search", async (req, res) => {
     const query  = req.query.q;
     if (!query) return res.status(400).json({ error: "Missing query parameter" });
 
-    const results = await play.search(query );
-
+    const results = await play.search(query);
     res.json(results.map((track) => ({
       title: track.title,
       url: track.url,

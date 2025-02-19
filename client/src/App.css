@@ -241,4 +241,114 @@ p {
   height: 25px !important;
 }
 
+.audio-player {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  background-color: var(--background-color);
+  height: 80vh;
+  width: 100vw;
+  position: fixed;
+  top: 0;
+  padding-top:50px;
+}
+.audio-player .info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items:center;
+  gap: 8px;
+  font-size: 20px;
+}
+.audio-player .audio-thumbnail {
+  height: 200px;
+  width: 200px;
+  object-fit: contain;
+}
+.audio-player .audio-progress {
+  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  margin: 15px;
+  gap:5px;
+}
+/*.audio-player .progress-input {
+  color:var(--primary-bg-color);
+  background-color: var(--text-color);
+  width: 70vw;
+  max-width: 400px;
+  border: none ;
+  caret-color: black;
+}*/
 
+.progress-input {
+  width: 70vw;
+  max-width: 400px;
+  color: var(--text-color);
+  background: var(--primary-bg-color); /* Black background */
+  
+  outline: none !important;
+  border:none !important;
+  transition: background 0.5s;
+}
+
+.audio-player .controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.audio-player .control-btn {
+  color: var(--text-color) !important;
+  
+}
+.audio-player .control-btn-icon {
+  height: 50px !important ;
+  width: 50px !important;
+}
+
+.audio-player-mini {
+  display:flex;
+  justify-content: space-around;
+  align-items: center;
+  position: fixed;
+  bottom: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90vw;
+  max-width:400px;
+  height: auto;
+  background-color: var(--primary-bg-color);
+  padding: 10px;
+  border-radius: 12px;
+  z-index: 1;
+}
+.audio-player-mini .infobox {
+  display:flex;
+  gap: 10px;
+}
+.audio-player-mini .thumbnail {
+  width: 50px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+.audio-player-mini .info {
+  display: flex;
+  flex-direction: column;
+  width:150px;
+  overflow: hidden;
+  text-wrap: nowrap;
+}
+.audio-player-mini .controls {
+  display: flex;
+  justify-content: center;
+  
+  align-items:center;
+}
+.audio-player-mini .control-btn,.control-btn-icon{
+  width: 35px !important;
+  height: 50px !important;
+  color: var(--text-color);
+}
