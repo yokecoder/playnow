@@ -6,7 +6,6 @@ import PauseIcon from "@mui/icons-material/Pause";
 import SkipNextIcon from "@mui/icons-material/SkipNext";
 import SkipPreviousIcon from "@mui/icons-material/SkipPrevious";
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight'; 
 
 
 
@@ -17,7 +16,10 @@ const AudioContext = createContext();
 export default function AudioPlayerContainer({ url, onSkipPrevious, onSkipNext, children }) {
   const streamUrl = `https://server-playnow-production.up.railway.app/musicapis/ytmusic/stream?url=${encodeURIComponent(url)}`;
   const audioRef = useRef(null);
-  const [audioInfo, setAudioInfo] = useState(null);
+  const [audioInfo, setAudioInfo] = useState(()=>{
+    const cachedInfo = localStorage.getItem("audioInfo");
+    return cachedInfo ? JSON.parse(cachedInfo) :null;
+  });
   const [isPlaying, setIsPlaying] = useState(false);
   
   
@@ -29,64 +31,93 @@ export default function AudioPlayerContainer({ url, onSkipPrevious, onSkipNext, 
       );
       if (response.data) {
         setAudioInfo(response.data);
+        localStorage.setItem("audioInfo", JSON.stringify(response.data))
       }
     } catch (error) {
       console.error("Error fetching audio info:", error);
     }
   }, [url]);
-
+  
   useEffect(() => {
     fetchAudioInfo();
-  }, [url, fetchAudioInfo]);
+  }, [url]);
   
   
   /* Notification Control Panel */
   useEffect(() => {
-    if ("mediaSession" in navigator && audioInfo) {
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: audioInfo.title,
-        artist: audioInfo.author,
-        album: "Playnow Music",
-        artwork: [{ src: audioInfo.thumbnail, sizes: "192x192", type: "image/png" }],
-      });
-  
-      navigator.mediaSession.setActionHandler("play", () => {
-        audioRef.current.play();
-        setIsPlaying(true);
-      });
-  
-      navigator.mediaSession.setActionHandler("pause", () => {
-        audioRef.current.pause();
-        setIsPlaying(false);
-      });
-  
-      navigator.mediaSession.setActionHandler("seekbackward", ({ seekOffset = 10 }) => {
-        audioRef.current.currentTime = Math.max(audioRef.current.currentTime - seekOffset, 0);
-      });
-  
-      navigator.mediaSession.setActionHandler("seekforward", ({ seekOffset = 10 }) => {
-        audioRef.current.currentTime = Math.min(audioRef.current.currentTime + seekOffset, audioRef.current.duration);
-      });
-  
-      navigator.mediaSession.setActionHandler("seekto", ({ seekTime }) => {
-        audioRef.current.currentTime = seekTime;
-      });
-  
-      navigator.mediaSession.setActionHandler("stop", () => {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
-        setIsPlaying(false);
-      });
+    if (!audioInfo || !audioRef.current) return;
+
+    if ("mediaSession" in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+            title: audioInfo.title || "Unknown Title",
+            artist: audioInfo.author || "Unknown Artist",
+            album: "PlayNow Music",
+            artwork: audioInfo.thumbnail ? [{ src: audioInfo.thumbnail, sizes: "192x192", type: "image/png" }] : [],
+        });
+
+        const audio = audioRef.current;
+
+        navigator.mediaSession.setActionHandler("play", () => {
+            audio.play();
+            setIsPlaying(true);
+        });
+
+        navigator.mediaSession.setActionHandler("pause", () => {
+            audio.pause();
+            setIsPlaying(false);
+        });
+
+        navigator.mediaSession.setActionHandler("seekbackward", (details) => {
+            audio.currentTime = Math.max(audio.currentTime - (details.seekOffset || 10), 0);
+        });
+
+        navigator.mediaSession.setActionHandler("seekforward", (details) => {
+            audio.currentTime = Math.min(audio.currentTime + (details.seekOffset || 10), audio.duration || 0);
+        });
+
+        navigator.mediaSession.setActionHandler("seekto", (details) => {
+                audio.currentTime = 0;
+           
+        });
+
+        navigator.mediaSession.setActionHandler("stop", () => {
+            audio.pause();
+            audio.currentTime = 0;
+            setIsPlaying(false);
+        });
     }
- }, [url, audioInfo]);
+  }, [audioInfo, audioRef, url]); // Runs only when `audioInfo` is available
   
-  const togglePlay = () => {
-    if (isPlaying) {
-      audioRef.current.pause();
-    } else {
-      audioRef.current.play();
+  //Handles Page Reload Smoothly 
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const handleBeforeUnload = () => {
+        audio.pause();
+        audio.src = ""; // Reset audio source to prevent stuck state
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload)
+    return () => {
+        window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
+  
+  
+  const togglePlay = async () => {
+    if (!audioRef.current) return;
+
+    try {
+        if (isPlaying) {
+            audioRef.current.pause();
+            setIsPlaying(false);
+        } else {
+            await audioRef.current.play();
+            setIsPlaying(true);
+        }
+    } catch (error) {
+        console.error("Playback error:", error);
     }
-    setIsPlaying(!isPlaying);
   };
    
   return (
@@ -139,38 +170,36 @@ export const AudioPlayer = ({ onClose }) => {
 
   // Set background image when audio info is available
   useEffect(() => {
-    if (audioInfo) setBgImage(audioInfo.thumbnail);
-  }, [audioInfo]);
+    setBgImage(audioInfo ? audioInfo.thumbnail : null);
+}, [audioInfo]);
 
   // Update progress bar and current time
   useEffect(() => {
+    if (!audioRef.current) return;
     const audio = audioRef.current;
-    if (!audio) return;
 
     const updateProgress = () => {
-      setCurrentTime(audio.currentTime);
-      setProgress((audio.currentTime / (audio.duration || 1)) * 100); // Avoid division by zero
+        if (audio.duration) {
+            setCurrentTime(audio.currentTime);
+            setProgress((audio.currentTime / audio.duration) * 100);
+        }
     };
 
-    const setMetadata = () => {
-      if (audio.readyState >= 2) {
-        setAudioDuration(audio.duration || 0);
-      }
-    };
+    const updateMetadata = () => setAudioDuration(audio.duration || 0);
 
     audio.addEventListener("timeupdate", updateProgress);
-    audio.addEventListener("loadedmetadata", setMetadata);
+    audio.addEventListener("loadedmetadata", updateMetadata);
 
     return () => {
-      audio.removeEventListener("timeupdate", updateProgress);
-      audio.removeEventListener("loadedmetadata", setMetadata);
+        audio.removeEventListener("timeupdate", updateProgress);
+        audio.removeEventListener("loadedmetadata", updateMetadata);
     };
-  }, [audioRef]);
+}, [audioRef]); // Empty dependency array ensures it runs once after mount
 
   // Ensure duration is set properly
   useEffect(() => {
     const audio = audioRef.current;
-    if (audio && audio.readyState >= 2 && audio.duration > 0) {
+    if (audio && audio.readyState > 0) {
       setAudioDuration(audio.duration);
     }
   }, [audioRef?.current?.readyState]);
@@ -184,7 +213,7 @@ export const AudioPlayer = ({ onClose }) => {
   };
 
   // Seek audio position
-  const handleSeek = (e) => {
+  const handleSeek = useCallback((e) => {
     const audio = audioRef.current;
     if (!audio) return;
 
@@ -192,7 +221,7 @@ export const AudioPlayer = ({ onClose }) => {
     audio.currentTime = newTime;
     setCurrentTime(newTime);
     setProgress(e.target.value);
-  };
+  }, []);
 
   return (
     <div className="audio-player">

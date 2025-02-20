@@ -2,34 +2,33 @@
   --background-color: #f2f1f1ff;
   --text-color: #181818;
   --primary-bg-color: #f5f4f4fa;
-  --topnav-box-shadow: 0px 5px 5px rgba(0, 0, 0, 0.4);
-  --btmnav-box-shadow: 0px 2px 5px 5px rgba(1, 1, 1, 0.4);
-  --transition: background-color 0.25s, color 0.25s;
+  --topnav-box-shadow: 0px 5px 5px rgba(0, 0, 0, 0.2);
+  --btmnav-box-shadow: 0px 0px 5px 5px rgba(1, 1, 1, 0.1);
+  --transition: background-color 0.25s ease-in-out, color 0.25s ease-in-out;
 }
-
 :root[data-theme="dark"] {
   --background-color:#181818 ;
   --text-color: #f2f1f1ff;
   --primary-bg-color: #111111 ;
-  --topnav-box-shadow: 0px 5px 5px rgba(1, 1, 1, 0.8);
-  --btmnav-box-shadow: 0px 2px 5px 5px rgba(1, 1, 1, 0.8);
-  --transition: background-color 0.25s, color 0.25s;
+  --topnav-box-shadow: 0px 5px 5px rgba(1, 1, 1, 0.5);
+  --btmnav-box-shadow: 0px 0px 5px 5px rgba(1, 1, 1, 0.5);
+  --transition: background-color 0.25s ease-in-out,  color 0.25s ease-in-out;
 }
 
 /* Apply Variables */
 body {
-  
   margin: 0;
   padding: 0;
   background-color: var(--background-color);
   color: var(--text-color);
-  transition: var(--transition) ;
   height: auto;
   overflow: hidden;
   font-family: Poppins;
-  
+  transition: var(--transition);
 }
-
+span , p {
+  color:var(--text-color);
+}
 
 .loader-mini {
   width: 30px;
@@ -65,6 +64,7 @@ body {
   color: inherit;
   height: 100vh;
   overflow: auto;
+  transition: var(--transition);
 }
 
 .page-layout {
@@ -86,19 +86,21 @@ body {
   padding: 10px;
   background-color: var(--primary-bg-color);
   box-shadow: var(--topnav-box-shadow);
-  z-index: 100;
+  z-index: 1;
   transition: var(--transition);
 }
 .top-nav .topnav-icon-btn {
   
   color: var(--text-color) !important;
   height: 24px !important;
+  
 }
 .top-nav .app-title {
   display: flex;
   justify-content: center;
   align-items: center;
   font-size: 20px;
+  
 }
 
 
@@ -117,8 +119,10 @@ body {
   padding-bottom: 10px;
   background-color: var(--primary-bg-color);
   box-shadow: var(--btmnav-box-shadow);
-  z-index: 100;
+  z-index: 1;
   transition: var(--transition);
+  
+  
 }
 .bottom-nav-icon {
   color: var(--text-color) !important;
@@ -190,7 +194,6 @@ body {
   padding: 10px;
   padding-bottom: 30px;
   margin-bottom: 50px;
-  
   
 }
 p {
@@ -274,21 +277,12 @@ p {
   margin: 15px;
   gap:5px;
 }
-/*.audio-player .progress-input {
-  color:var(--primary-bg-color);
-  background-color: var(--text-color);
-  width: 70vw;
-  max-width: 400px;
-  border: none ;
-  caret-color: black;
-}*/
 
-.progress-input {
+.audio-player .progress-input {
   width: 70vw;
   max-width: 400px;
-  color: var(--text-color);
-  background: var(--primary-bg-color); /* Black background */
-  
+  color: var(--text-color) !important;
+  background: var(--primary-bg-color) !important; 
   outline: none !important;
   border:none !important;
   transition: background 0.5s;
@@ -323,6 +317,7 @@ p {
   padding: 10px;
   border-radius: 12px;
   z-index: 1;
+  box-shadow:var(--btmnav-box-shadow);
 }
 .audio-player-mini .infobox {
   display:flex;
@@ -337,14 +332,25 @@ p {
 .audio-player-mini .info {
   display: flex;
   flex-direction: column;
-  width:150px;
+  max-width: 150px;
   overflow: hidden;
-  text-wrap: nowrap;
+  white-space: nowrap;
+  position: relative;
+}
+
+.audio-player-mini .info span {
+  display: inline-block;
+  min-width: 100%;
+  animation: scrollText 5s linear infinite;
+}
+
+@keyframes scrollText {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
 }
 .audio-player-mini .controls {
   display: flex;
   justify-content: center;
-  
   align-items:center;
 }
 .audio-player-mini .control-btn,.control-btn-icon{
@@ -352,3 +358,21 @@ p {
   height: 50px !important;
   color: var(--text-color);
 }
+.explore-panel-container {
+  display:flex;
+  flex-direction: column;
+  height: auto;
+  padding-bottom: 60px;
+  overflow: scroll;
+}
+.explore-panel {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--primary-bg-color);
+}
+.explore-panel .explore-caption {
+  display: flex;
+  align-items: center;
+  padding: 5px;
+}
+

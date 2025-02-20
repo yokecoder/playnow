@@ -20,7 +20,7 @@ app.use('/musicapis', musicapis)
 
 
 app.get("/", (req, res) => {
-  res.send("Playnow --- Streaming on the Gooooo")
+  res.send("Playnow --- Streaming on the Goo")
 })
 
 // Set the server to listen on port 3000
