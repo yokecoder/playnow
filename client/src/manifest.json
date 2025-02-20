@@ -1,18 +1,19 @@
 {
   "short_name": "PlayNow",
-  "name": "PlayNow - Streaming App",
+  "name": "PlayNow",
   "icons": [
     {
-      "src": "./assets/file-RcN3rh6FcsMCoTS9i3KNUn.webp",
+      "src": "./assets/file-9YPsX8abhvBeLF2SScriXy.webp",
       "type": "image/webp",
       "sizes": "192x192"
     },
     {
-      "src": "./assets/file-RcN3rh6FcsMCoTS9i3KNUn.webp",
+      "src": "./assets/file-9YPsX8abhvBeLF2SScriXy.webp",
       "type": "image/webp",
       "sizes": "512x512"
     }
   ],
   "start_url": "/",
-  "display": "standalone"
+  "display": "standalone",
+  "background_color": "#181818"
 }
