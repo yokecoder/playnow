@@ -1,4 +1,4 @@
-import  { createContext,useContext, useEffect, useState, useCallback, useRef, cloneElement } from "react";
+import  { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import axios from "axios";
 import IconButton from "@mui/material/IconButton";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
@@ -10,16 +10,21 @@ import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 
 
 // Create Context
+//Context for playing Audio
 const AudioContext = createContext();
 
-// Parent Component
+
+/* Handles  Audio metadata and audio playin dynamically */
 export default function AudioPlayerContainer({ url, onSkipPrevious, onSkipNext, children }) {
   const streamUrl = `https://server-playnow-production.up.railway.app/musicapis/ytmusic/stream?url=${encodeURIComponent(url)}`;
   const audioRef = useRef(null);
+  
+  
   const [audioInfo, setAudioInfo] = useState(()=>{
     const cachedInfo = localStorage.getItem("audioInfo");
     return cachedInfo ? JSON.parse(cachedInfo) :null;
   });
+  
   const [isPlaying, setIsPlaying] = useState(false);
   
   
@@ -37,6 +42,8 @@ export default function AudioPlayerContainer({ url, onSkipPrevious, onSkipNext, 
       console.error("Error fetching audio info:", error);
     }
   }, [url]);
+  
+  
   
   useEffect(() => {
     fetchAudioInfo();
@@ -103,7 +110,15 @@ export default function AudioPlayerContainer({ url, onSkipPrevious, onSkipNext, 
     };
   }, []);
   
+  /*Automatically starts audio playback when metadata is loaded*/
+  const startAutoPlay = () =>{
+    if (audioRef.current) {
+      audioRef.current.play();
+      setIsPlaying(true);
+    }
+  }
   
+  /* audio control that toggles between play and pause */
   const togglePlay = async () => {
     if (!audioRef.current) return;
 
@@ -122,17 +137,69 @@ export default function AudioPlayerContainer({ url, onSkipPrevious, onSkipNext, 
    
   return (
     <AudioContext.Provider value={{ audioRef, audioInfo, isPlaying,setIsPlaying, togglePlay, onSkipNext,onSkipPrevious }}>
-      <audio ref={audioRef} src={streamUrl}></audio>
+      <audio ref={audioRef} src={streamUrl} onLoadedMetadata={startAutoPlay}></audio>
       {children}
     </AudioContext.Provider>
   );
 }
 
-// Child Component
-export const AudioPlayerMini = ({onExpand}) => {
+
+/* for maintaining Audio Queue and consistent audio playback */ 
+export const AudioQueueContext = createContext({});
+
+export const AudioQueueProvider = ({ children }) => {
+    // Initialize audio queue from localStorage
+    //TODO: write functions to manage skip next, skip previous control
+    //TODO: write a function that automatically appends song urls to queue
+    //TODO: write more advanced crud functions 
+    const [audioQueue, setAudioQueue] = useState(() => {
+        try {
+            const storedQueue = JSON.parse(localStorage.getItem("audioQueue"));
+            return Array.isArray(storedQueue) ? storedQueue : [];
+        } catch {
+            return [];
+        }
+    });
+
+    // Function to add audio to queue (avoiding duplicates)
+    const addToQueue = useCallback((url) => {
+        setAudioQueue((prevQueue) => {
+            const updatedQueue = [url, ...prevQueue];
+            localStorage.setItem("audioQueue", JSON.stringify(updatedQueue));
+            return updatedQueue;
+        });
+    }, []);
+
+    // Sync queue across tabs (localStorage event listener)
+    useEffect(() => {
+        const syncQueue = () => {
+            try {
+                const storedQueue = JSON.parse(localStorage.getItem("audioQueue"));
+                if (Array.isArray(storedQueue)) {
+                    setAudioQueue(storedQueue);
+                }
+            } catch {
+                setAudioQueue([]);
+            }
+        };
+
+        window.addEventListener("storage", syncQueue);
+        return () => window.removeEventListener("storage", syncQueue);
+    }, []);
+
+    return (
+        <AudioQueueContext.Provider value={{ audioQueue, addToQueue }}>
+            {children}
+        </AudioQueueContext.Provider>
+    );
+};
+
+
+/* Mini (popup) like audio player component */
+export const AudioPlayerMini = ({ onExpand }) => {
   const { audioRef, audioInfo, togglePlay, isPlaying, setIsPlaying ,onSkipNext,onSkipPrevious} = useContext(AudioContext); // Access Context
   
-  //console.log(audioInfo);
+  
   return (
     <div  className="audio-player-mini">
       <div onClick={onExpand} className="infobox">
@@ -161,6 +228,11 @@ export const AudioPlayerMini = ({onExpand}) => {
   );
 }
 
+
+
+
+
+/* full screen Audio Player Component */
 export const AudioPlayer = ({ onClose }) => {
   const { audioRef, audioInfo, togglePlay, isPlaying } = useContext(AudioContext);
   const [progress, setProgress] = useState(0);
@@ -170,8 +242,8 @@ export const AudioPlayer = ({ onClose }) => {
 
   // Set background image when audio info is available
   useEffect(() => {
-    setBgImage(audioInfo ? audioInfo.thumbnail : null);
-}, [audioInfo]);
+    setBgImage(audioInfo && audioInfo?.thumbnail ? audioInfo.thumbnail : null);
+  }, [audioInfo]);
 
   // Update progress bar and current time
   useEffect(() => {

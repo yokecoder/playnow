@@ -9,6 +9,7 @@ const ytdl = require('@distube/ytdl-core');
 
 const router = express.Router();
 
+/* Spotify Apis  */
 /*Middleware configuration for Authentication */
 let TOKEN = null;
 let tokenExpiresAt = 0;
@@ -78,6 +79,9 @@ router.get('/spotifyapi/search', async  (req, res) => {
   }
 });
 
+
+/* Apis for fetching music information from youtube music */
+/* This Api Searches for tracks from youtube based on query  */
 router.get("/ytmusic/search", async (req, res) => {
   try {
     const query  = req.query.q;
@@ -96,6 +100,7 @@ router.get("/ytmusic/search", async (req, res) => {
   }
 });
 
+/*This Api Fetches needed info of by track url */ 
 router.get("/ytmusic/track", async (req, res) => {
   try {
     const { url } = req.query;
@@ -115,17 +120,21 @@ router.get("/ytmusic/track", async (req, res) => {
   }
 });
 
+
+/* This api fetches music based on  playlist url */
 router.get("/ytmusic/playlist", async (req, res) => {
   try {
+    
     const { url } = req.query;
     if (!url) return res.status(400).json({ error: "Missing URL parameter" });
-
     const playlist = await play.playlist_info(url, { incomplete: true });
-
     res.json(playlist);
+    
   } catch (error) {
+    
     console.error("Playlist Error:", error);
     res.status(500).json({ error: "Failed to fetch playlist details" });
+ 
   }
 });
 
