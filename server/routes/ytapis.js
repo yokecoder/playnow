@@ -86,7 +86,6 @@ router.get('/dl', async (req, res)=> {
   } catch (error) {
     res.status(400).json({status:false, msg:'Internal Server Error', details: error.message})
   }
-
 });
 
 //information About a Playlist Url
@@ -101,35 +100,36 @@ router.post("/playlistinfo", async (req, res)=> {
   }
 });
 
-
 //Api for searching through youtube search
+// apikey rotation to manage quota limits
+const apiKeys = [process.env.YT_APIKEY, process.env.YT_APIKEY2];
+let currentKeyIndex = 0;
 //Uses Youtube Data Api v3 to findout searches
-
 router.get("/search", async (req, res) => {
   const query = req.query.query;
-  const api_key = process.env.YT_APIKEY;
-  
   if (!query) {
     return res.status(400).json({ error: "Query parameter 'query' is required" });
   }
 
   try {
+    const apiKey = apiKeys[currentKeyIndex]; // Select the current key
+    currentKeyIndex = (currentKeyIndex + 1) % apiKeys.length; // Rotate keys
+
     const response = await axios.get("https://www.googleapis.com/youtube/v3/search", {
       params: {
         part: "snippet",
         q: query,
         maxResults: 10,
         type: "video,playlist",
-        key: api_key,
+        key: apiKey,
       },
     });
-    
+
     res.json(response.data.items);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch search results", details: error.message });
   }
 });
-
 
 //api for streaming allows to play third-party restricted videos 
 router.get("/stream", async (req, res) => {

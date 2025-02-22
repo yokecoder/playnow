@@ -25,8 +25,8 @@ const authMiddleware = async (req, res, next) => {
       'grant_type=client_credentials',
       {
         headers: {
-              'Authorization': `Basic ${Buffer.from(`${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`).toString('base64')}`,
-              'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': `Basic ${Buffer.from(`${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`).toString('base64')}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
       }
     );
@@ -79,65 +79,7 @@ router.get('/spotifyapi/search', async  (req, res) => {
   }
 });
 
-
 /* Apis for fetching music information from youtube music */
-/* This Api Searches for tracks from youtube based on query  */
-router.get("/ytmusic/search", async (req, res) => {
-  try {
-    const query  = req.query.q;
-    if (!query) return res.status(400).json({ error: "Missing query parameter" });
-
-    const results = await play.search(query);
-    res.json(results.map((track) => ({
-      title: track.title,
-      url: track.url,
-      duration: track.durationRaw,
-      thumbnail: track.thumbnails[0].url,
-    })));
-  } catch (error) {
-    console.error("search Error:", error);
-    res.status(500).json({ error: "Failed to search tracks" });
-  }
-});
-
-/*This Api Fetches needed info of by track url */ 
-router.get("/ytmusic/track", async (req, res) => {
-  try {
-    const { url } = req.query;
-    if (!url) return res.status(400).json({ error: "Missing URL parameter" });
-
-    const info = await play.video_basic_info(url);
-
-    res.json({
-      title: info.video_details.title,
-      author: info.video_details.channel.name,
-      duration: info.video_details.durationRaw,
-      thumbnail: info.video_details.thumbnails[0].url,
-    });
-  } catch (error) {
-    console.error("Track Info Error:", error);
-    res.status(500).json({ error: "Failed to fetch track info" });
-  }
-});
-
-
-/* This api fetches music based on  playlist url */
-router.get("/ytmusic/playlist", async (req, res) => {
-  try {
-    
-    const { url } = req.query;
-    if (!url) return res.status(400).json({ error: "Missing URL parameter" });
-    const playlist = await play.playlist_info(url, { incomplete: true });
-    res.json(playlist);
-    
-  } catch (error) {
-    
-    console.error("Playlist Error:", error);
-    res.status(500).json({ error: "Failed to fetch playlist details" });
- 
-  }
-});
-
 //Gets the Youtube Music Result to Spotify Url of a track 
 router.get("/ytmusic/spotify-to-yt", async (req, res) => {
   try {
@@ -173,8 +115,63 @@ router.get("/ytmusic/spotify-to-yt", async (req, res) => {
   }
 });
 
-//Api for streaming audio from youtube music
+/* This Api Searches for tracks from youtube based on query  */
+router.get("/ytmusic/search", async (req, res) => {
+  try {
+    const query  = req.query.q;
+    if (!query) return res.status(400).json({ error: "Missing query parameter" });
 
+    const results = await play.search(query);
+    res.json(results.map((track) => ({
+      title: track.title,
+      url: track.url,
+      duration: track.durationRaw,
+      thumbnail: track.thumbnails[0].url,
+    })));
+  } catch (error) {
+    console.error("search Error:", error);
+    res.status(500).json({ error: "Failed to search tracks" });
+  }
+});
+
+/*This Api Fetches needed info of by track url */ 
+router.get("/ytmusic/track", async (req, res) => {
+  try {
+    const { url } = req.query;
+    if (!url) return res.status(400).json({ error: "Missing URL parameter" });
+
+    const info = await play.video_basic_info(url);
+
+    res.json({
+      title: info.video_details.title,
+      author: info.video_details.channel.name,
+      duration: info.video_details.durationRaw,
+      thumbnail: info.video_details.thumbnails[0].url,
+      others:  info.video_details
+    });
+  } catch (error) {
+    console.error("Track Info Error:", error);
+    res.status(500).json({ error: "Failed to fetch track info" });
+  }
+});
+
+
+/* This api fetches music based on  playlist url */
+router.get("/ytmusic/playlist", async (req, res) => {
+  try {
+    
+    const { url } = req.query;
+    if (!url) return res.status(400).json({ error: "Missing URL parameter" });
+    const playlist = await play.playlist_info(url, { incomplete: true });
+    res.json(playlist);
+    
+  } catch (error) {
+    console.error("Playlist Error:", error);
+    res.status(500).json({ error: "Failed to fetch playlist details" });
+  }
+});
+
+//Api for streaming audio from youtube music
 router.get("/ytmusic/stream", async (req, res) => {
   try {
     const { url } = req.query;
@@ -206,16 +203,4 @@ router.get("/ytmusic/stream", async (req, res) => {
 
 
 
-
-
-
-
-
-
-
-
 module.exports = router;
-
-
-
-
