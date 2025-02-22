@@ -6,26 +6,68 @@ import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import QueueMusicIcon from '@mui/icons-material/QueueMusic';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import IconButton from '@mui/material/IconButton';
-import { AudioQueueContext } from "./audioplayer";
+import { useAudioQueue } from "./audioplayer";
 
-/* Component for rendering playlists */
+
+/*
+Component: <Playlist />:
+========================
+params:
+=======
+url: playlist url of youtube music 
+onClose: event to be occured when the playlist is closed 
+Desc: 
+=====
+The <Playlist /> Component gives a smoother
+experience when exploring playlists from explore section
+or home page 
+*/
+
+/*todo: add more controls and options */
 export default function Playlist({ url, onClose }){
-  const { addToQueue, audioQueue } = useContext(AudioQueueContext);
-  const [playlistInfo, setPlaylistInfo] = useState(null);
-  const [isVisible, setVisible] = useState(true);
   
-  /* Obtain the Playlist Info */
+  // functions for queue management in the current playlist 
+  const { addToQueue, addToLast, audioQueue, clearAudioQueue } = useAudioQueue();
+  
+  /* Meta data about the current playlist url will
+  be stored in localstorage as cache and retained when refereshed 
+  the metadata will change when a new url is given */
+  const [playlistInfo, setPlaylistInfo] = useState(()=>{
+    const cachedInfo = localStorage.getItem("playlistInfo");
+    return cachedInfo ? JSON.parse(cachedInfo) :null;
+  });
+  
+  const [isVisible, setVisible] = useState(true);
   const fetchPlaylistinfo = useCallback(async () => {
+    /*
+    Retrives the playlist metadata using the url and /playlist api 
+    and stores it in 'playlistInfo' state and localstorage as a cache 
+    */
     const response = await axios.get(`https://server-playnow-production.up.railway.app/musicapis/ytmusic/playlist?url=${encodeURIComponent(url)}`);
     if (response.data) {
       setPlaylistInfo(response.data)
+      localStorage.setItem("playlistInfo", JSON.stringify(response.data))
+      //localStorage.setItem("recentlyPlayed", )
     }
   },[url]);
   
   useEffect(() => {
+    /*Immediatly updates playlist info , resets the audioQueue
+    and adds tracks one by one to the queue with a delay */
     if (!playlistInfo) fetchPlaylistinfo();
+    if (playlistInfo) {
+    clearAudioQueue();
+    const existingUrls = new Set(); // To track added URLs
+      playlistInfo.videos.forEach((vid, index) => {
+        setTimeout(() => {
+          if (!existingUrls.has(vid.url)) {
+            addToLast(vid.url);
+            existingUrls.add(vid.url);
+          }
+        }, index * 800); // Adds a 500ms delay between additions
+      });
+    }
   },[url]);
-  
   /* 
     Default function  when arrow down button is clicked 
     and onClose Function is not defined 
@@ -33,7 +75,6 @@ export default function Playlist({ url, onClose }){
   const closePlaylist = () => {
     setVisible(!isVisible);
   }
-  
   return (
     <>
       { isVisible &&
@@ -51,7 +92,6 @@ export default function Playlist({ url, onClose }){
         </div>
         
         <div className="playlist-ctrls">
-          <IconButton> <QueueMusicIcon /> </IconButton>
           <div className="play-btn"> 
             <PlayArrowIcon className="playbtn-icon"/>
             <span className="play-btn-text" > play </span>  
@@ -61,7 +101,7 @@ export default function Playlist({ url, onClose }){
         <div className="music-list">
           { playlistInfo && (
             playlistInfo.videos.map((vid) => (
-              <div   className="music-card">
+              <div key={vid.id}  className="music-card">
                 <div onClick={()=> addToQueue(vid?.url)}  className="music-info">
                   <img className="thumbnail" src={vid?.thumbnail?.url} />
                   <div className="music-info-ttl">

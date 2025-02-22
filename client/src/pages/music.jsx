@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect, useContext } from "react";
 import SearchBar from "../comps/searchbar";
-import AudioPlayerContainer, { AudioPlayer, AudioPlayerMini, AudioQueueContext } from "../comps/audioplayer.jsx";
-import ExplorePanel from "../comps/explorepanel";
+import AudioPlayerContainer, { AudioPlayer, AudioPlayerMini, useAudioQueue } from "../comps/audioplayer.jsx";
 import Playlist from "../comps/playlists";
 
 
@@ -15,7 +14,7 @@ export default function Music() {
   const [search, setSearch] = useState("");
   const [miniPlayer, setMiniPlayer] = useState(true);
   const [searchResults, setSearchResults] = useState(null);
-  const { audioQueue } = useContext(AudioQueueContext) || {}; // Ensure `audioQueue` is always an object
+  const { audioQueue } = useAudioQueue() // Ensure `audioQueue` is always an object
   const [recentlyPlayed, setRecentlyPlayed] = useState(() => 
     JSON.parse(localStorage.getItem("recentlyPlayed")) || []
   );
@@ -34,13 +33,11 @@ export default function Music() {
         onChange={setSearch}
         onCancel={() => setSearch("")}
       />
-
-      {/* Explore Sections */}
-      <div className="explore-panel-container">
-        <ExplorePanel exploreCaption="Explore Genres" />
-        {recentlyPlayed.length > 0 && <ExplorePanel exploreCaption="Recently Played" />}
+      
+      {/*Home Page Design for Exploring Songs, Playlists, Artists many more */}
+      <div className="explore-section-container" >
+        
       </div>
-
       {/* Plays audio only when audio Queue is available */}
       { audioQueue && audioQueue.length > 0 && 
         <AudioPlayerContainer url={audioQueue[0]}>
