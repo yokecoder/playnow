@@ -1,8 +1,10 @@
 import { useState, useCallback, useEffect, useContext } from "react";
 import SearchBar from "../comps/searchbar";
-import AudioPlayerContainer, { AudioPlayer, AudioPlayerMini, useAudioQueue } from "../comps/audioplayer.jsx";
+import IconButton from "@mui/material/IconButton";
+import AudioPlayerContainer, { AudioPlayer, AudioPlayerMini, useAudioQueue } from "../comps/audioplayer";
 import Playlist from "../comps/playlists";
-
+import ExploreSection from "../comps/exploresection";
+import axios from "axios";
 
 
 /* The Component that handles music section overall */
@@ -15,6 +17,8 @@ export default function Music() {
   const [miniPlayer, setMiniPlayer] = useState(true);
   const [searchResults, setSearchResults] = useState(null);
   const { audioQueue } = useAudioQueue() // Ensure `audioQueue` is always an object
+  const [genres , setGenres] = useState([])
+  
   const [recentlyPlayed, setRecentlyPlayed] = useState(() => 
     JSON.parse(localStorage.getItem("recentlyPlayed")) || []
   );
@@ -23,6 +27,20 @@ export default function Music() {
   useEffect(() => {
     localStorage.setItem("recentlyPlayed", JSON.stringify(recentlyPlayed));
   }, [recentlyPlayed]);
+  
+  useEffect(() => {
+    const fetchGenres = async () => {
+      const response = await axios.get("https://server-playnow-production.up.railway.app/musicapis/spotifyapi?ep=/browse/categories")
+      if (response.data){
+        setGenres(response.data?.categories)
+      } else {
+        setGenres([])
+      }
+    };
+    fetchGenres();
+    //console.log(genres.items)
+  }, [])
+  
   
   return (
     <div>
@@ -35,7 +53,45 @@ export default function Music() {
       />
       
       {/*Home Page Design for Exploring Songs, Playlists, Artists many more */}
-      <div className="explore-section-container" >
+      <div className="explore-section" >
+        {/* Section of Genres */}
+        <ExploreSection caption="Explore Genres">
+          {genres?.items?.map((item, idx) => (
+              <div key={idx} style={{ backgroundImage: item?.icons?.[0]?.url ? `url(${item.icons[0].url})` : "none" }} className="carousel-card">
+                <span className="category-item-name" >{item?.name} </span>
+              </div>
+            ))}
+        </ExploreSection>
+        
+        {/* Section for recently Played songs */}
+        <ExploreSection caption="Recently Played">
+          {recentlyPlayed.length === 0 && <span>No recent plays. Start exploring</span>}
+        </ExploreSection>
+        
+        {/* Section for Trending Songs */}
+        <ExploreSection caption="Trending Songs">
+          <span> trending songs will display here</span>
+        </ExploreSection>
+        
+        <ExploreSection caption="Listen to your Language">
+          <span> language based playlist </span>
+        </ExploreSection>
+        
+        <ExploreSection caption="Listen to you're Mood">
+          <span> trending songs will display here</span>
+        </ExploreSection>
+        
+        <ExploreSection caption="Top Artists">
+          <span> Top Artists will display here</span>
+        </ExploreSection>
+        
+        
+        
+        
+        
+        
+        
+        
         
       </div>
       {/* Plays audio only when audio Queue is available */}

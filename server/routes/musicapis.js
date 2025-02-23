@@ -2,6 +2,7 @@ const express = require('express');
 const axios = require("axios");
 const play = require("play-dl");
 const ytdl = require('@distube/ytdl-core');
+const YTMusic =require("ytmusic-api");
 
 
 
@@ -116,23 +117,27 @@ router.get("/ytmusic/spotify-to-yt", async (req, res) => {
 });
 
 /* This Api Searches for tracks from youtube based on query  */
-router.get("/ytmusic/search", async (req, res) => {
-  try {
-    const query  = req.query.q;
-    if (!query) return res.status(400).json({ error: "Missing query parameter" });
 
-    const results = await play.search(query);
-    res.json(results.map((track) => ({
-      title: track.title,
-      url: track.url,
-      duration: track.durationRaw,
-      thumbnail: track.thumbnails[0].url,
-    })));
-  } catch (error) {
-    console.error("search Error:", error);
-    res.status(500).json({ error: "Failed to search tracks" });
-  }
+
+const ytmusic = new YTMusic();
+router.get("/ytmusic/search", async (req, res) => {
+    try {
+        await ytmusic.initialize(); // Initialize without cookies
+        const query = req.query.q;
+        const type = req.query.type;
+        
+        if (!query) {
+            return res.status(400).json({ error: "Query parameter is required" });
+        }
+
+        const results = await ytmusic.search(query, {filter: type  });
+        res.json(results);
+    } catch (error) {
+        console.error("Error fetching search results:", error);
+        res.status(500).json({ error: "Failed to fetch search results" });
+    }
 });
+
 
 /*This Api Fetches needed info of by track url */ 
 router.get("/ytmusic/track", async (req, res) => {
