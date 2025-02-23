@@ -130,14 +130,25 @@ router.get("/ytmusic/search", async (req, res) => {
             return res.status(400).json({ error: "Query parameter is required" });
         }
 
-        const results = await ytmusic.search(query, {filter: type  });
-        res.json(results);
+        const results = await ytmusic.search(query, { filter: type });
+
+        // Construct URLs for videos and playlists
+        const formattedResults = results.map(item => {
+            let url = "";
+            if (item.videoId) {
+                url = `https://www.youtube.com/watch?v=${item.videoId}`;
+            } else if (item.playlistId) {
+                url = `https://www.youtube.com/playlist?list=${item.playlistId}`;
+            }
+            return { ...item, url };
+        });
+
+        res.json(formattedResults);
     } catch (error) {
         console.error("Error fetching search results:", error);
         res.status(500).json({ error: "Failed to fetch search results" });
     }
 });
-
 
 /*This Api Fetches needed info of by track url */ 
 router.get("/ytmusic/track", async (req, res) => {

@@ -37,6 +37,7 @@ export default function Music() {
         setGenres([])
       }
     };
+    
     fetchGenres();
     //console.log(genres.items)
   }, [])
@@ -70,19 +71,19 @@ export default function Music() {
         
         {/* Section for Trending Songs */}
         <ExploreSection caption="Trending Songs">
-          <span> trending songs will display here</span>
+         
         </ExploreSection>
         
         <ExploreSection caption="Listen to your Language">
-          <span> language based playlist </span>
+        
         </ExploreSection>
         
         <ExploreSection caption="Listen to you're Mood">
-          <span> trending songs will display here</span>
+         
         </ExploreSection>
         
         <ExploreSection caption="Top Artists">
-          <span> Top Artists will display here</span>
+        
         </ExploreSection>
         
         
