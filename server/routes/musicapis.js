@@ -4,181 +4,34 @@ const play = require("play-dl");
 const ytdl = require("@distube/ytdl-core");
 const YTMusic = require("ytmusic-api");
 
-const router = express.Router();
-
-/* Spotify Apis  */
-/*Middleware configuration for Authentication */
-let TOKEN = null;
-let tokenExpiresAt = 0;
-
-const authMiddleware = async (req, res, next) => {
-    if (TOKEN && Date.now() < tokenExpiresAt) {
-        req.authToken = TOKEN;
-        return next();
-    }
-    try {
-        const response = await axios.post(
-            "https://accounts.spotify.com/api/token",
-            "grant_type=client_credentials",
-            {
-                headers: {
-                    Authorization: `Basic ${Buffer.from(
-                        `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
-                    ).toString("base64")}`,
-                    "Content-Type": "application/x-www-form-urlencoded"
-                }
-            }
-        );
-
-        TOKEN = response.data.access_token;
-        tokenExpiresAt = Date.now() + response.data.expires_in * 1000;
-        req.authToken = TOKEN;
-        next();
-    } catch (error) {
-        console.error("Error fetching Spotify token:", error);
-        res.status(500).json({ error: "Spotify authentication failed" });
-    }
+const youtubeHeadersMiddleware = (req, res, next) => {
+    req.ytdlOptions = {
+        requestOptions: {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36',
+                'Referer': 'https://www.youtube.com/',
+                'Cookie': 'VISITOR_INFO1_LIVE=OgRU3YHghK8; YSC=gb2dKlvocOs; PREF=tz=Asia.Calcutta',
+                'Accept-Language': 'en-US,en;q=0.9',
+                'Connection': 'keep-alive',
+            },
+        },
+    };
+    next();
 };
-router.use(authMiddleware);
 
-/*This Route api handles  spotify web api endpoints dynamically*/
-router.get("/spotifyapi", async (req, res) => {
-    try {
-        let { ep, ...queryParams } = req.query;
-        if (!ep)
-            return res
-                .status(400)
-                .json({ error: "Missing endpoint parameter" });
-
-        const apiUrl = `${process.env.SPOTIFY_API_URL}${ep}`;
-
-        const response = await axios.get(apiUrl, {
-            headers: { Authorization: `Bearer ${req.authToken}` },
-            params: queryParams
-        });
-        res.json(response.data);
-    } catch (error) {
-        res.json({ status: 500, error: error.message });
-    }
-});
-
-/*Spotify search api to get results from search on spotify as source*/
-router.get("/spotifyapi/search", async (req, res) => {
-    try {
-        const query = req.query.q;
-        const type = req.query.type || "track,playlist,album,artist";
-        let searchApi = `${process.env.SPOTIFY_API_URL}/search?q=${query}&type=${type}`;
-        const response = await axios.get(searchApi, {
-            headers: { Authorization: `Bearer ${req.authToken}` }
-        });
-        res.json(response.data);
-    } catch (error) {
-        res.json({ status: 500, error: error.message });
-    }
-});
-
-/* Apis for fetching music information from youtube music */
-//Gets the Youtube Music Result to Spotify Url of a track
-router.get("/ytmusic/spotify-to-yt", async (req, res) => {
-    try {
-        const { spotifyUrl } = req.query;
-        if (!spotifyUrl)
-            return res.status(400).json({ error: "Missing Spotify URL" });
-
-        const trackId = spotifyUrl.split("/track/")[1]?.split("?")[0];
-        if (!trackId)
-            return res.status(400).json({ error: "Invalid Spotify track URL" });
-
-        const Response = await axios.get(
-            `https://api.spotify.com/v1/tracks/${trackId}`,
-            {
-                headers: { Authorization: `Bearer ${req.authToken}` }
-            }
-        );
-        const trackData = Response.data;
-        const trackName = trackData.name;
-        const artistName = trackData.artists
-            .map(artist => artist.name)
-            .join(" ");
-
-        const ytResults = await play.search(`${trackName} ${artistName}`);
-
-        if (ytResults.length === 0) {
-            return res
-                .status(404)
-                .json({ error: "No matching track found on YouTube Music" });
-        }
-
-        res.json({
-            spotify_title: trackName,
-            youtube_title: ytResults[0].title,
-            youtube_url: ytResults[0].url,
-            duration: ytResults[0].durationRaw,
-            thumbnail: ytResults[0].thumbnails[0].url
-        });
-    } catch (error) {
-        console.error("spotify to YouTube Error:", error);
-        res.status(500).json({
-            error: "Failed to convert Spotify track to YouTube Music"
-        });
-    }
-});
-
-/* This Api Searches for tracks from youtube based on query  */
-
-const ytmusic = new YTMusic();
-router.get("/ytmusic/search", async (req, res) => {
-    try {
-        await ytmusic.initialize(); // Initialize without cookies
-        const query = req.query.q;
-        const type = req.query.type;
-
-        if (!query) {
-            return res
-                .status(400)
-                .json({ error: "Query parameter is required" });
-        }
-
-        const results = await ytmusic.search(query, {
-            filter: type,
-            limit: 30
-        });
-
-        // Construct URLs for videos and playlists
-        const formattedResults = results.map(item => {
-            let url = "";
-            if (item.videoId) {
-                url = `https://music.youtube.com/watch?v=${item.videoId}`;
-            } else if (item.playlistId) {
-                url = `https://music.youtube.com/playlist?list=${item.playlistId}`;
-            }
-            return { ...item, url };
-        });
-
-        res.json(formattedResults);
-    } catch (error) {
-        console.error("Error fetching search results:", error);
-        res.status(500).json({ error: "Failed to fetch search results" });
-    }
-});
-
-/*This Api Fetches needed info of by track url */
-router.get("/ytmusic/track", async (req, res) => {
+// Apply middleware to relevant YouTube Music routes
+router.get("/ytmusic/track", youtubeHeadersMiddleware, async (req, res) => {
     try {
         const { url } = req.query;
-        if (!url)
-            return res.status(400).json({ error: "Missing URL parameter" });
+        if (!url) return res.status(400).json({ error: "Missing URL parameter" });
 
-        const info = await play.video_basic_info(url);
+        const info = await play.video_basic_info(url, req.ytdlOptions);
 
         res.json({
             title: info.video_details.title,
             author: info.video_details.channel.name,
             duration: info.video_details.durationRaw,
-            thumbnail:
-                info.video_details.thumbnails[
-                    info.video_details.thumbnails.length - 1
-                ].url, //best possible image available
+            thumbnail: info.video_details.thumbnails[info.video_details.thumbnails.length - 1].url, // Best available image
             others: info.video_details
         });
     } catch (error) {
@@ -187,13 +40,12 @@ router.get("/ytmusic/track", async (req, res) => {
     }
 });
 
-/* This api fetches music based on  playlist url */
-router.get("/ytmusic/playlist", async (req, res) => {
+router.get("/ytmusic/playlist", youtubeHeadersMiddleware, async (req, res) => {
     try {
         const { url } = req.query;
-        if (!url)
-            return res.status(400).json({ error: "Missing URL parameter" });
-        const playlist = await play.playlist_info(url, { incomplete: true });
+        if (!url) return res.status(400).json({ error: "Missing URL parameter" });
+
+        const playlist = await play.playlist_info(url, { incomplete: true, ...req.ytdlOptions });
         res.json(playlist);
     } catch (error) {
         console.error("Playlist Error:", error);
@@ -201,14 +53,11 @@ router.get("/ytmusic/playlist", async (req, res) => {
     }
 });
 
-//Api for streaming audio from youtube music
-router.get("/ytmusic/stream", async (req, res) => {
+router.get("/ytmusic/stream", youtubeHeadersMiddleware, async (req, res) => {
     try {
         const { url } = req.query;
         if (!url || !ytdl.validateURL(url)) {
-            return res
-                .status(400)
-                .json({ error: "Invalid or missing YouTube Music URL" });
+            return res.status(400).json({ error: "Invalid or missing YouTube Music URL" });
         }
 
         res.set({
@@ -218,14 +67,14 @@ router.get("/ytmusic/stream", async (req, res) => {
             "Transfer-Encoding": "chunked"
         });
 
-        // Stream only the highest-quality audio instantly
         ytdl(url, {
             filter: "audioonly",
             quality: "highestaudio",
-            highWaterMark: 32 * 1024
+            highWaterMark: 32 * 1024,
+            requestOptions: req.ytdlOptions.requestOptions, // Pass custom headers
         })
             .on("error", err => {
-                console.error("stream Error:", err.message);
+                console.error("Stream Error:", err.message);
                 res.status(500).json({ error: "Failed to stream audio" });
             })
             .pipe(res);
@@ -234,5 +83,3 @@ router.get("/ytmusic/stream", async (req, res) => {
         res.status(500).json({ error: "Failed to stream audio" });
     }
 });
-
-module.exports = router;
