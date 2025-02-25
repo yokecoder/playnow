@@ -22,7 +22,7 @@ export default function Music() {
       localStorage.setItem("recentlyPlayed", JSON.stringify(recentlyPlayed));
     }
   }, [recentlyPlayed]);
-
+  
   useEffect(() => {
     const urls = [
       { key: "trending", url: `/musicapis/ytmusic/search?q=youtube Trending music global ${currentYear} | Latest hit songs ${currentYear} | popular songs ${currentYear}  &type=playlist` },

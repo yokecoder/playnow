@@ -27,44 +27,36 @@ that provides the audio metadata , audio source and
 audio control functions to child component that depends on it
 */
 export default function AudioPlayerContainer({ url, children }) {
-  
-  /* video url that combined with stream source using api */
   const streamUrl = `https://server-playnow-production.up.railway.app/musicapis/ytmusic/stream?url=${encodeURIComponent(url)}`;
   const audioRef = useRef(null);
-  const {skipToNext} = useAudioQueue();
-  /* manages the audio metadata / caches data from localstorage in case of refresh */
-  const [audioInfo, setAudioInfo] = useState(()=>{
+  const { skipToNext } = useAudioQueue();
+
+  const [audioInfo, setAudioInfo] = useState(() => {
     const cachedInfo = localStorage.getItem("audioInfo");
-    return cachedInfo ? JSON.parse(cachedInfo) :null;
+    return cachedInfo ? JSON.parse(cachedInfo) : null;
   });
-  
-  //Audio State whether it is playing or not 
+
   const [isPlaying, setIsPlaying] = useState(false);
-  
+
   const fetchAudioInfo = useCallback(async () => {
-    /* Retrieve Audio Metadata from the url using /track api
-    and update it to audioInfo and localstorage cache */
     try {
       const response = await axios.get(
         `https://server-playnow-production.up.railway.app/musicapis/ytmusic/track?url=${encodeURIComponent(url)}`
       );
       if (response.data) {
         setAudioInfo(response.data);
-        localStorage.setItem("audioInfo", JSON.stringify(response.data))
+        localStorage.setItem("audioInfo", JSON.stringify(response.data));
       }
     } catch (error) {
       console.error("Error fetching audio info:", error);
     }
   }, [url]);
-  
+
   useEffect(() => {
-    /* instatly updates the audio metadata */
     fetchAudioInfo();
   }, [url]);
-  
-  
+
   useEffect(() => {
-    /* Notification Control Panel */
     if (!audioInfo || !audioRef.current) return;
     if ("mediaSession" in navigator) {
       navigator.mediaSession.metadata = new MediaMetadata({
@@ -73,6 +65,7 @@ export default function AudioPlayerContainer({ url, children }) {
         album: "PlayNow Music",
         artwork: audioInfo.thumbnail ? [{ src: audioInfo.thumbnail, sizes: "192x192", type: "image/png" }] : [],
       });
+
       const audio = audioRef.current;
       navigator.mediaSession.setActionHandler("play", () => {
         audio.play();
@@ -89,7 +82,9 @@ export default function AudioPlayerContainer({ url, children }) {
         audio.currentTime = Math.min(audio.currentTime + (details.seekOffset || 10), audio.duration || 0);
       });
       navigator.mediaSession.setActionHandler("seekto", (details) => {
-        audio.currentTime = 0;
+        if (details.seekTime !== undefined) {
+          audio.currentTime = details.seekTime;
+        }
       });
       navigator.mediaSession.setActionHandler("stop", () => {
         audio.pause();
@@ -97,33 +92,35 @@ export default function AudioPlayerContainer({ url, children }) {
         setIsPlaying(false);
       });
     }
-  }, [audioInfo, audioRef, url]); // Runs only when `audioInfo` is available
-  
+  }, [audioInfo, audioRef, url]);
+
   useEffect(() => {
-    //Handles Page Reload Smoothly 
+    if (audioRef.current) {
+      audioRef.current.src = streamUrl;
+      audioRef.current.load();
+    }
+  }, [streamUrl]);
+
+  useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
-
     const handleBeforeUnload = () => {
       audio.pause();
-      audio.src = ""; // Reset audio source to prevent stuck state
+      audio.src = "";
     };
-    window.addEventListener("beforeunload", handleBeforeUnload)
+    window.addEventListener("beforeunload", handleBeforeUnload);
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, []);
-  
+
   const startAutoPlay = () => {
-    /*Automatically starts audio playback 
-    when metadata is loaded*/
     if (audioRef.current) {
-      audioRef.current.play();
+      audioRef.current.play().catch((err) => console.error("AutoPlay error:", err));
       setIsPlaying(true);
     }
-  }
-  
-  /* audio control that toggles between play and pause */
+  };
+
   const togglePlay = async () => {
     if (!audioRef.current) return;
     try {
@@ -136,12 +133,15 @@ export default function AudioPlayerContainer({ url, children }) {
       }
     } catch (error) {
       console.error("Playback error:", error);
+      if (error.name === "NotAllowedError") {
+        alert("Playback was blocked. Please interact with the page first.");
+      }
     }
   };
-   
+
   return (
-    <AudioContext.Provider value={{ audioRef, audioInfo, isPlaying,setIsPlaying, togglePlay}}>
-      <audio ref={audioRef} src={streamUrl} onEnded={skipToNext} onLoadedMetadata={startAutoPlay} ></audio>
+    <AudioContext.Provider value={{ audioRef, audioInfo, isPlaying, setIsPlaying, togglePlay }}>
+      <audio ref={audioRef} crossOrigin="anonymous" src={streamUrl} type="audio/mp3" onEnded={skipToNext} onLoadedMetadata={startAutoPlay}></audio>
       {children}
     </AudioContext.Provider>
   );
