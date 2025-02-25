@@ -4,6 +4,9 @@ const play = require("play-dl");
 const ytdl = require("@distube/ytdl-core");
 const YTMusic = require("ytmusic-api");
 
+
+const router = express.Router();
+
 const youtubeHeadersMiddleware = (req, res, next) => {
     req.ytdlOptions = {
         requestOptions: {
@@ -83,3 +86,5 @@ router.get("/ytmusic/stream", youtubeHeadersMiddleware, async (req, res) => {
         res.status(500).json({ error: "Failed to stream audio" });
     }
 });
+
+module.exports = router;
