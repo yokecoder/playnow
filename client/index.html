@@ -1,15 +1,29 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/webp" href="./src/assets/file-9YPsX8abhvBeLF2SScriXy.webp" />
-    <link rel="manifest" href="./src/manifest.json" />
-    
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Playnow - Streaming on the Goo</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+    <head>
+        <meta charset="UTF-8" />
+        <link
+            rel="icon"
+            type="image/webp"
+            href="./src/assets/file-9YPsX8abhvBeLF2SScriXy.webp"
+        />
+        <link rel="manifest" href="./src/manifest.json" />
+
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Playnow - Streaming on the Goo</title>
+    </head>
+    <body>
+        <div id="root"></div>
+        <script type="module" src="/src/main.jsx"></script>
+        <script>
+            (function () {
+                var script = document.createElement("script");
+                script.src = "//cdn.jsdelivr.net/npm/eruda";
+                document.body.appendChild(script);
+                script.onload = function () {
+                    eruda.init();
+                };
+            })();
+        </script>
+    </body>
 </html>

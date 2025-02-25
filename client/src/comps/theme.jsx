@@ -1,24 +1,23 @@
-import  { createContext, useState, useEffect } from "react";
+import { create } from "zustand";
 
-// Create Theme Context
-export const ThemeContext = createContext();
-
-const ThemeProvider = ({ children }) => {
-
-  const [theme, setTheme] = useState("dark");
-  const toggleTheme = () => {
-    setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
-  };
-  // Apply theme styles to document root
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-  }, [theme]);
-
-  return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      {children}
-    </ThemeContext.Provider>
-  );
+// Retrieve theme from localStorage or use 'dark' as default
+const getInitialTheme = () => {
+    const savedTheme = localStorage.getItem("theme");
+    return savedTheme || "dark"; // Default to 'dark'
 };
 
-export default ThemeProvider;
+// Apply theme to `document.documentElement` on first load
+document.documentElement.setAttribute("data-theme", getInitialTheme());
+
+const useTheme = create(set => ({
+    theme: getInitialTheme(),
+    toggleTheme: () =>
+        set(state => {
+            const newTheme = state.theme === "light" ? "dark" : "light";
+            document.documentElement.setAttribute("data-theme", newTheme);
+            localStorage.setItem("theme", newTheme);
+            return { theme: newTheme };
+        })
+}));
+
+export default useTheme;
