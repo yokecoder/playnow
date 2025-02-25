@@ -130,7 +130,7 @@ router.get("/ytmusic/search", async (req, res) => {
             return res.status(400).json({ error: "Query parameter is required" });
         }
 
-        const results = await ytmusic.search(query, { filter: type });
+        const results = await ytmusic.search(query, { filter: type ,limit: 30});
 
         // Construct URLs for videos and playlists
         const formattedResults = results.map(item => {
@@ -162,7 +162,7 @@ router.get("/ytmusic/track", async (req, res) => {
       title: info.video_details.title,
       author: info.video_details.channel.name,
       duration: info.video_details.durationRaw,
-      thumbnail: info.video_details.thumbnails[0].url,
+      thumbnail: info.video_details.thumbnails[ info.video_details.thumbnails.length - 1 ].url, //best possible image available 
       others:  info.video_details
     });
   } catch (error) {

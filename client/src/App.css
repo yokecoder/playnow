@@ -33,6 +33,14 @@ span , p {
   color:var(--text-color);
 }
 
+.loader-container {
+  display: flex ;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 50vh;
+}
+
 .loader-mini {
   width: 30px;
   height: 30px;
@@ -59,7 +67,6 @@ span , p {
     transform: rotate(360deg);
   }
 }
-
 .app-layout {
   display: flex;
   flex-direction: column;
@@ -69,7 +76,6 @@ span , p {
   overflow: auto;
   transition: var(--transition);
 }
-
 .page-layout {
   display: flex;
   flex-direction: column;
@@ -77,7 +83,6 @@ span , p {
   margin-bottom: 40px;
   padding-bottom: 6px;
 }
-
 /*Styles for Top Navigation Bar*/
 .top-nav {
   position: sticky;
@@ -89,23 +94,19 @@ span , p {
   padding: 10px;
   background-color: var(--primary-bg-color);
   box-shadow: var(--topnav-box-shadow);
-  z-index: 1;
+  z-index: 10;
   transition: var(--transition);
 }
 .top-nav .topnav-icon-btn {
-  
   color: var(--text-color) !important;
   height: 24px !important;
-  
 }
 .top-nav .app-title {
   display: flex;
   justify-content: center;
   align-items: center;
   font-size: 20px;
-  
 }
-
 
 /* Styles for bottom navigation bar*/
 .bottom-nav {
@@ -122,10 +123,8 @@ span , p {
   padding-bottom: 10px;
   background-color: var(--primary-bg-color);
   box-shadow: var(--btmnav-box-shadow);
-  z-index: 1;
+  z-index: 10;
   transition: var(--transition);
-  
-  
 }
 .bottom-nav-icon {
   color: var(--text-color) !important;
@@ -253,17 +252,19 @@ p {
   flex-direction: column;
   justify-content: flex-start;
   background-color: var(--background-color);
-  height: 80vh;
+  height: 90vh;
   width: 100vw;
   position: fixed;
   top: 0;
   padding-top:50px;
+  z-index: 1;
 }
 .audio-player .info {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items:center;
+  text-align: center;
   gap: 8px;
   font-size: 20px;
 }
@@ -362,13 +363,13 @@ p {
   height: 50px !important;
   color: var(--text-color);
 }
-
 /* Styles for Playlist Component */
 .playlist-container {
   display: flex;
   flex-direction: column;
   position: fixed;
   top: 0;
+  left: 0;
   height: 100vh;
   width: 100vw;
   background-color: var(--primary-bg-color);
@@ -376,12 +377,11 @@ p {
   overflow: hidden;
   transition: var(--transition);
   gap: 5px;
+  z-index: 1;
 }
-
 .playlist-container .hidden {
   display: none !important;
 }
-
 .playlist-container .playlist-info {
   display: flex;
   flex-direction: column;
@@ -389,18 +389,15 @@ p {
   justify-content: center;
   gap:10px !important;
 }
-
 .playlist-container .thumbnail {
   height: 100px;
   width: 150px;
   object-fit: cover;
 }
-
 .playlist-container .title {
   font-size: 22px;
   font-weight: bold;
 }
-
 .playlist-container .icons-top {
   color: var(--text-color);
   font-size: 60px !important;
@@ -482,54 +479,80 @@ p {
   white-space: nowrap;
   max-width: 250px;
 }
-
+/**/
 .explore-section {
-  
   display: flex;
   flex-direction: column;
-  flex:1 0 auto;
-  height: 80vh;
-  overflow: scroll;
+  flex:  1 0 auto ;
+  height: 80vh ;
+  overflow-y: scroll;
   padding-bottom: 60px;
-  
-  
+  gap: 10px;
 }
 .explore-section .category {
-  display:flex ;
+  display: flex ;
   flex-direction: column;
-  justify-content: center;
-  padding-top: 5px ;
-  
+  gap: 5px;
+  padding: 5px;
 }
 .explore-section .title {
-  color:var(--text-color);
-  transition: var(--transition);
-  font-size: 22px ;
-  font-weight: ;
-  padding: 5px 15px;
   display:flex;
   align-items: center;
+  font-size: 22px;
+  padding: 5px;
 }
 .explore-section .carousel {
   display: flex;
-  justify-content: flex-start;
-  overflow: scroll;
-  width:auto;
-  max-height: 150px;
-  gap: 10px ;
-  padding: 10px  0px ;
-  margin-left: 15px;
+  align-items:  center;
+  gap: 10px;
+  padding: 10px ;
+  overflow-y:hidden;
+  overflow-x:scroll;
 }
 .carousel .carousel-card {
-  height:  60px ;
-  min-width: 120px ;
-  display: flex ;
+  display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
-  border-radius: 12px;
-  margin: 10px 2px;
+  min-width: 150px;
+  height: auto;
+  min-height: 60px;
+  max-height: 120px;
+  border-radius: 50px;
 }
 .carousel-card .category-item-name {
-  color:white;
+  color: white;
+}
+.carousel-card-1 {
+  background-color: var(--primary-bg-color);
+  height: 220px;
+  
+  min-width: 150px;
+  display: flex ;
+  flex-direction: column;
+  justify-content: space-around;
+  padding: 5px ;
+  border-radius: 12px;
+  transition: var(--transition);
+  box-shadow: var(--topnav-box-shadow);
+}
+.carousel .carousel-card-img {
+  height: 120px ;
+  width: 150px ;
+  object-fit: cover;
+  border-radius: 12px;
+}
+.carousel .card-title {
+   text-wrap: nowrap;
+   overflow: hidden;
+   padding: 5px 0px;
+}
+.carousel .card-type {
+  font-size: 15px;
+  text-wrap: nowrap;
+   overflow: hidden;
+}
+.carousel .card-ctrls {
+  
 }
 

@@ -31,7 +31,7 @@ export default function AudioPlayerContainer({ url, children }) {
   /* video url that combined with stream source using api */
   const streamUrl = `https://server-playnow-production.up.railway.app/musicapis/ytmusic/stream?url=${encodeURIComponent(url)}`;
   const audioRef = useRef(null);
-
+  const {skipToNext} = useAudioQueue();
   /* manages the audio metadata / caches data from localstorage in case of refresh */
   const [audioInfo, setAudioInfo] = useState(()=>{
     const cachedInfo = localStorage.getItem("audioInfo");
@@ -141,7 +141,7 @@ export default function AudioPlayerContainer({ url, children }) {
    
   return (
     <AudioContext.Provider value={{ audioRef, audioInfo, isPlaying,setIsPlaying, togglePlay}}>
-      <audio ref={audioRef} src={streamUrl} ></audio>
+      <audio ref={audioRef} src={streamUrl} onEnded={skipToNext} onLoadedMetadata={startAutoPlay} ></audio>
       {children}
     </AudioContext.Provider>
   );
@@ -248,7 +248,9 @@ export const AudioQueueProvider = ({ children }) => {
     
     /* Reset Audio Queue */
     const clearAudioQueue = useCallback(() => {
-      setAudioQueue([]); // Directly setting it to an empty array
+      setAudioQueue([]);
+      setPrevAudioQueue([])
+      // Directly setting it to an empty array
       updateStorage('audioQueue', []);
       updateStorage('prevAudioQueue', [])
     }, []);
