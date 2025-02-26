@@ -1,89 +1,139 @@
 const express = require("express");
 const axios = require("axios");
-const play = require("play-dl");
 const ytdl = require("@distube/ytdl-core");
 const YTMusic = require("ytmusic-api");
-
+const play = require("play-dl");
 
 const router = express.Router();
 
-const youtubeHeadersMiddleware = (req, res, next) => {
-    req.ytdlOptions = {
-        requestOptions: {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36',
-                'Referer': 'https://www.youtube.com/',
-                'Cookie': 'VISITOR_INFO1_LIVE=OgRU3YHghK8; YSC=gb2dKlvocOs; PREF=tz=Asia.Calcutta',
-                'Accept-Language': 'en-US,en;q=0.9',
-                'Connection': 'keep-alive',
-            },
-        },
-    };
-    next();
-};
-
-// Apply middleware to relevant YouTube Music routes
-router.get("/ytmusic/track", youtubeHeadersMiddleware, async (req, res) => {
+const ytmusic = new YTMusic();
+// Initialize YTMusic
+(async () => {
     try {
-        const { url } = req.query;
-        if (!url) return res.status(400).json({ error: "Missing URL parameter" });
+        await ytmusic.initialize();
 
-        const info = await play.video_basic_info(url, req.ytdlOptions);
-
-        res.json({
-            title: info.video_details.title,
-            author: info.video_details.channel.name,
-            duration: info.video_details.durationRaw,
-            thumbnail: info.video_details.thumbnails[info.video_details.thumbnails.length - 1].url, // Best available image
-            others: info.video_details
-        });
+        console.log("YTMusic API initialized successfully!");
     } catch (error) {
-        console.error("Track Info Error:", error);
-        res.status(500).json({ error: "Failed to fetch track info" });
+        console.error("YTMusic API initialization failed:", error);
     }
-});
+})();
 
-router.get("/ytmusic/playlist", youtubeHeadersMiddleware, async (req, res) => {
+// 1. Search for Music (Songs, Albums, Playlists, Artists)
+// * Working
+router.get("/ytmusic/search/", async (req, res) => {
     try {
-        const { url } = req.query;
-        if (!url) return res.status(400).json({ error: "Missing URL parameter" });
-
-        const playlist = await play.playlist_info(url, { incomplete: true, ...req.ytdlOptions });
-        res.json(playlist);
-    } catch (error) {
-        console.error("Playlist Error:", error);
-        res.status(500).json({ error: "Failed to fetch playlist details" });
-    }
-});
-
-router.get("/ytmusic/stream", youtubeHeadersMiddleware, async (req, res) => {
-    try {
-        const { url } = req.query;
-        if (!url || !ytdl.validateURL(url)) {
-            return res.status(400).json({ error: "Invalid or missing YouTube Music URL" });
+        const query = req.query.query;
+        if (!query) {
+            return res
+                .status(400)
+                .json({ error: "Query parameter is required" });
         }
 
+        const results = await ytmusic.search(query);
+
+        if (!results || results.length === 0) {
+            return res.status(404).json({ error: "No results found" });
+        }
+
+        res.json(results);
+    } catch (error) {
+        console.error("Error in search:", error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 🎶 2. Get Song Details
+router.get("/ytmusic/song/:id", async (req, res) => {
+    try {
+        const songId = req.params.id;
+        const songDetails = await ytmusic.getSong(songId);
+        res.json(songDetails);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get("/ytmusic/playlist/:id", async (req, res) => {
+    try {
+        const playlistId = req.params.id;
+        if (!playlistId) {
+            return res.status(400).json({ error: "Playlist ID is required" });
+        }
+        const playlist = await play.playlist_info(
+            `https://music.youtube.com/playlist?list=${playlistId}`,
+            { incomplete: true }
+        );
+
+        if (!playlist || !playlist.title) {
+            return res
+                .status(404)
+                .json({ error: "Playlist not found or unavailable" });
+        }
+
+        res.json(playlist);
+    } catch (error) {
+        console.error("Error fetching playlist:", error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+//3. Get Artist Details
+// * workinh
+router.get("/ytmusic/artist/:id", async (req, res) => {
+    try {
+        const artistId = req.params.id;
+        const artistDetails = await ytmusic.getArtist(artistId);
+        res.json(artistDetails);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 📀 6. Get Album Details
+router.get("/ytmusic/album/:id", async (req, res) => {
+    try {
+        const albumId = req.params.id;
+        const albumDetails = await ytmusic.getAlbum(albumId);
+        res.json(albumDetails);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get("/ytmusic/stream/:id", async (req, res) => {
+    try {
+        const songId = req.params.id;
+        if (!songId)
+            return res.status(400).json({ error: "Song ID is required" });
+
+        const url = `https://www.youtube.com/watch?v=${songId}`;
         res.set({
             "Content-Type": "audio/mpeg",
             "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
+            Connection: "keep-alive",
+            "Accept-Ranges": "bytes",
             "Transfer-Encoding": "chunked"
         });
 
+        // Stream the audio with minimal data preloading
         ytdl(url, {
             filter: "audioonly",
             quality: "highestaudio",
-            highWaterMark: 32 * 1024,
-            requestOptions: req.ytdlOptions.requestOptions, // Pass custom headers
-        })
-            .on("error", err => {
-                console.error("Stream Error:", err.message);
-                res.status(500).json({ error: "Failed to stream audio" });
-            })
-            .pipe(res);
+            highWaterMark: 24 * 1024,
+            dlChunkSize: 32 * 1024 
+        }).pipe(res);
     } catch (error) {
-        console.error("Stream Error:", error.message);
-        res.status(500).json({ error: "Failed to stream audio" });
+        console.error("❌ Stream error:", error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get("/ytmusic/new", async (req, res) => {
+    try {
+        const releases = await ytmusic.search("new-releases", "songs");
+        res.json(releases);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 
