@@ -43,7 +43,7 @@ router.get("/ytmusic/search/", async (req, res) => {
 });
 
 // 🎶 2. Get Song Details
-router.get("/ytmusic/song/:id", async (req, res) => {
+router.get("/ytmusic/track/:id", async (req, res) => {
     try {
         const songId = req.params.id;
         const songDetails = await ytmusic.getSong(songId);
@@ -69,7 +69,6 @@ router.get("/ytmusic/playlist/:id", async (req, res) => {
                 .status(404)
                 .json({ error: "Playlist not found or unavailable" });
         }
-
         res.json(playlist);
     } catch (error) {
         console.error("Error fetching playlist:", error.message);
@@ -120,7 +119,7 @@ router.get("/ytmusic/stream/:id", async (req, res) => {
             filter: "audioonly",
             quality: "highestaudio",
             highWaterMark: 24 * 1024,
-            dlChunkSize: 32 * 1024 
+            dlChunkSize: 32 * 1024
         }).pipe(res);
     } catch (error) {
         console.error("❌ Stream error:", error.message);
