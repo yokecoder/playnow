@@ -395,6 +395,7 @@ export const Playlist = ({ playlistId, onClose }) => {
     useEffect(() => {
         autoQueuePlaylist();
     }, [playlistId, playlistInfo]);
+    
     /* 
     Default function when the arrow down button is clicked 
     and onClose function is not defined.
