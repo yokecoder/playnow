@@ -1,4 +1,4 @@
-import { useCallback, useState, useRef } from "react";
+import { useCallback, useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import IconButton from "@mui/material/IconButton";
@@ -7,54 +7,42 @@ import PauseIcon from "@mui/icons-material/Pause";
 import SkipNextIcon from "@mui/icons-material/SkipNext";
 import SkipPreviousIcon from "@mui/icons-material/SkipPrevious";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import useTrackQueue from "../utils/queue_manager.jsx";
 
-export default function AudioPlayer({ url, miniPlayer = true }) {
+export default function AudioPlayer({ trackId }) {
     const trackRef = useRef(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [progress, setProgress] = useState(0);
     const [audioDuration, setAudioDuration] = useState(0);
     const [currentTime, setCurrentTime] = useState(0);
-    const [bgImage, setBgImage] = useState(null);
+    const [miniPlayer, setMiniPlayer] = useState(true);
+    const { skipToPrevious, skipToNext } = useTrackQueue();
 
-    const isPlaylist = useCallback(() => {
-        return url.startsWith("http") && url.includes("list=");
-    }, [url]);
+    const fetchTrackInfo = async ({ queryKey }) => {
+        const [, trackId] = queryKey; // Extract trackId from queryKey
+        if (!trackId) return null; // Prevent API call with undefined ID
+        // Check localStorage for cached track info
 
-    const streamUrl =
-        !isPlaylist() &&
-        `https://server-playnow-production.up.railway.app/musicapis/ytmusic/stream?url=${url}`;
+        try {
+            const response = await axios.get(
+                `https://server-playnow-production.up.railway.app/musicapis/ytmusic/track/${trackId}`
+            );
+
+            return response.data;
+        } catch (error) {
+            console.log("Error fetching track info:", error);
+            return null;
+        }
+    };
 
     // Fetch Track Info using React Query
-    const { data: trackInfo, isLoading: isTrackLoading } = useQuery({
-        queryKey: ["trackInfo", url],
-        queryFn: async () => {
-            if (!isPlaylist()) {
-                const response = await axios.get(
-                    `https://server-playnow-production.up.railway.app/musicapis/ytmusic/track?url=${url}`
-                );
-                return response.data;
-            }
-            return null;
-        },
-        enabled: !isPlaylist() // Only fetch when it's a track
+    const { data: trackInfo, isLoading } = useQuery({
+        queryKey: ["trackInfo", trackId],
+        queryFn: fetchTrackInfo,
+        enabled: !!trackId,
+        cacheTime: 1000 * 60 * 30
     });
-
-    // Fetch Playlist Info using React Query
-    const { data: playlistInfo, isLoading: isPlaylistLoading } = useQuery({
-        queryKey: ["playlistInfo", url],
-        queryFn: async () => {
-            if (isPlaylist()) {
-                const response = await axios.get(
-                    `https://your-api-url/playlist`,
-                    { params: { url } }
-                );
-                return response.data;
-            }
-            return null;
-        },
-        enabled: isPlaylist() // Only fetch when it's a playlist
-    });
-
     // Format time to min:sec
     const formatTime = seconds => {
         if (isNaN(seconds) || seconds <= 0) return "00:00";
@@ -66,36 +54,145 @@ export default function AudioPlayer({ url, miniPlayer = true }) {
         )}`;
     };
 
+    // Update duration when audio metadata loads
+    const handleLoadedMetadata = () => {
+        const audio = trackRef.current;
+        if (audio) {
+            setAudioDuration(audio.duration);
+        }
+    };
+
+    // Update progress as the audio plays
+    const handleTimeUpdate = () => {
+        const audio = trackRef.current;
+        if (audio) {
+            setCurrentTime(audio.currentTime);
+            setProgress((audio.currentTime / audio.duration) * 100);
+        }
+    };
+
     // Handle Seeking of progress bar
-    const handleSeek = useCallback(e => {
+    const handleSeek = e => {
         const audio = trackRef.current;
         if (!audio) return;
         const newTime = (e.target.value / 100) * (audio.duration || 1);
         audio.currentTime = newTime;
         setCurrentTime(newTime);
         setProgress(e.target.value);
-    }, []);
+    };
 
+    const togglePlay = () => {
+        const audio = trackRef.current;
+        if (!audio) return;
+
+        if (!isPlaying) {
+            audio.play();
+        } else {
+            audio.pause();
+        }
+        setIsPlaying(!isPlaying);
+    };
+
+    const startAutoPlay = () => {
+        setIsPlaying(true);
+        trackRef.current.play();
+    };
+
+    const streamUrl = `https://server-playnow-production.up.railway.app/musicapis/ytmusic/stream/${
+        trackInfo?.videoId ?? trackId
+    }`;
+
+    useEffect(() => {
+        if (!trackInfo || !trackRef.current) return;
+        if ("mediaSession" in navigator) {
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: trackInfo?.name || "Unknown Title",
+                artist: trackInfo?.artist?.name || "Unknown Artist",
+                album: "PlayNow Music",
+                artwork: trackInfo?.thumbnails?.map(thumbnail => ({
+                    src: thumbnail.url || "", // Ensure 'src' exists
+                    sizes:
+                        thumbnail.width && thumbnail.height
+                            ? `${thumbnail.width}x${thumbnail.height}`
+                            : "512x512",
+                    type: "image/png" // Adjust based on the actual format
+                })) || [
+                    {
+                        src: "fallback-image-url.png",
+                        sizes: "512x512",
+                        type: "image/png"
+                    }
+                ]
+            });
+
+            const audio = trackRef.current;
+            navigator.mediaSession.setActionHandler("play", () => {
+                audio.play();
+                setIsPlaying(true);
+            });
+            navigator.mediaSession.setActionHandler("pause", () => {
+                audio.pause();
+                setIsPlaying(false);
+            });
+            navigator.mediaSession.setActionHandler("seekbackward", details => {
+                audio.currentTime = Math.max(
+                    audio.currentTime - (details.seekOffset || 10),
+                    0
+                );
+            });
+            navigator.mediaSession.setActionHandler("seekforward", details => {
+                audio.currentTime = Math.min(
+                    audio.currentTime + (details.seekOffset || 10),
+                    audio.duration || 0
+                );
+            });
+            navigator.mediaSession.setActionHandler("seekto", details => {
+                if (details.seekTime !== undefined) {
+                    audio.currentTime = details.seekTime;
+                }
+            });
+            navigator.mediaSession.setActionHandler("stop", () => {
+                audio.pause();
+                audio.currentTime = 0;
+                setIsPlaying(false);
+            });
+        }
+    }, [trackInfo, trackRef, trackId]);
+
+    useEffect(() => {
+        const audio = trackRef.current;
+        if (!audio) return;
+        const handleBeforeUnload = () => {
+            audio.pause();
+            audio.src = "";
+        };
+        window.addEventListener("beforeunload", handleBeforeUnload);
+        return () => {
+            window.removeEventListener("beforeunload", handleBeforeUnload);
+        };
+    }, []);
     return (
         <>
-            <audio src={streamUrl} ref={trackRef} controls />
-            {isPlaylist() ? (
-                <div>
-                    {isPlaylistLoading ? (
-                        <p>Loading playlist...</p>
-                    ) : (
-                        <div>
-                            <h3>Playlist: {playlistInfo?.title}</h3>
-                            <ul>
-                                {playlistInfo?.tracks.map((track, index) => (
-                                    <li key={index}>{track.title}</li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-                </div>
-            ) : miniPlayer ? (
-                <div>Mini Player</div>
+            <audio
+                src={streamUrl}
+                ref={trackRef}
+                onLoadedMetadata={() => {
+                    startAutoPlay();
+                    handleLoadedMetadata();
+                }}
+                onEnded={skipToNext}
+                onTimeUpdate={handleTimeUpdate}
+            />
+
+            {miniPlayer ? (
+                <AudioPlayerMini
+                    trackInfo={trackInfo}
+                    onToggle={togglePlay}
+                    onExpand={() => setMiniPlayer(false)}
+                    isPlaying={isPlaying}
+                    onSkipNext={skipToNext}
+                    onSkipPrevious={skipToPrevious}
+                />
             ) : (
                 /* Full Screen Audio Player Component */
                 <div className="audio-player">
@@ -106,7 +203,13 @@ export default function AudioPlayer({ url, miniPlayer = true }) {
                             left: 0,
                             width: "inherit",
                             height: "inherit",
-                            backgroundImage: `url("${bgImage}")`,
+                            backgroundImage: trackInfo?.thumbnails
+                                ? `url("${
+                                      trackInfo?.thumbnails?.[
+                                          trackInfo?.thumbnails?.length - 1
+                                      ].url
+                                  }")`
+                                : "",
                             backgroundSize: "cover",
                             backgroundPosition: "center",
                             filter: "blur(15px)",
@@ -115,22 +218,28 @@ export default function AudioPlayer({ url, miniPlayer = true }) {
                         }}
                     />
                     <div>
-                        <IconButton className="control-btn">
+                        <IconButton
+                            onClick={() => setMiniPlayer(true)}
+                            className="control-btn">
                             <ArrowDropDownIcon className="control-btn-icon" />
                         </IconButton>
                     </div>
                     <div className="info">
-                        {isTrackLoading ? (
-                            <p>Loading track...</p>
+                        {isLoading ? (
+                            <div className="loader"></div>
                         ) : trackInfo ? (
                             <>
                                 <img
                                     className="audio-thumbnail"
-                                    src={trackInfo.thumbnail}
+                                    src={
+                                        trackInfo?.thumbnails?.[
+                                            trackInfo?.thumbnails?.length - 1
+                                        ]?.url
+                                    }
                                     alt="thumbnail"
                                 />
-                                <span>{trackInfo.title}</span>
-                                <span>{trackInfo.author}</span>
+                                <span>{trackInfo?.name}</span>
+                                <span>{trackInfo?.artist?.name}</span>
                             </>
                         ) : (
                             <p>No track info available</p>
@@ -149,19 +258,23 @@ export default function AudioPlayer({ url, miniPlayer = true }) {
                         <span>{formatTime(audioDuration)}</span>
                     </div>
                     <div className="controls">
-                        <IconButton className="control-btn">
+                        <IconButton
+                            onClick={skipToPrevious}
+                            className="control-btn">
                             <SkipPreviousIcon className="control-btn-icon" />
                         </IconButton>
                         <IconButton
-                            className="control-btn"
-                            onClick={() => setIsPlaying(!isPlaying)}>
+                            onClick={togglePlay}
+                            className="control-btn">
                             {isPlaying ? (
                                 <PauseIcon className="control-btn-icon" />
                             ) : (
                                 <PlayArrowIcon className="control-btn-icon" />
                             )}
                         </IconButton>
-                        <IconButton className="control-btn">
+                        <IconButton
+                            onClick={skipToNext}
+                            className="control-btn">
                             <SkipNextIcon className="control-btn-icon" />
                         </IconButton>
                     </div>
@@ -170,3 +283,215 @@ export default function AudioPlayer({ url, miniPlayer = true }) {
         </>
     );
 }
+
+export const AudioPlayerMini = ({
+    trackInfo,
+    onToggle,
+    isPlaying,
+    onSkipPrevious,
+    onSkipNext,
+    onExpand
+}) => {
+    return (
+        <div className="audio-player-mini">
+            <div onClick={onExpand} className="infobox">
+                {trackInfo ? (
+                    <img
+                        className="thumbnail"
+                        src={
+                            trackInfo?.thumbnails?.[
+                                trackInfo?.thumbnails?.length - 1
+                            ]?.url
+                        }
+                    />
+                ) : (
+                    <div className="loader-mini"></div>
+                )}
+                <div className="info">
+                    {trackInfo && (
+                        <>
+                            <span>{trackInfo?.name}</span>
+                            <span>{trackInfo?.artist?.name}</span>
+                        </>
+                    )}
+                </div>
+            </div>
+            <div className="controls">
+                <IconButton onClick={onSkipPrevious} className="control-btn">
+                    <SkipPreviousIcon className="control-btn-icon" />
+                </IconButton>
+                <IconButton className="control-btn" onClick={onToggle}>
+                    {isPlaying ? (
+                        <PauseIcon className="control-btn-icon" />
+                    ) : (
+                        <PlayArrowIcon className="control-btn-icon" />
+                    )}
+                </IconButton>
+                <IconButton onClick={onSkipNext} className="control-btn">
+                    <SkipNextIcon className="control-btn-icon" />
+                </IconButton>
+            </div>
+        </div>
+    );
+};
+
+/*
+Component: <Playlist />:
+========================
+params:
+=======
+url: playlist url of youtube music 
+onClose: event to be occurred when the playlist is closed 
+Desc: 
+=====
+The <Playlist /> Component gives a smoother
+experience when exploring playlists from the explore section
+or the home page.
+*/
+
+export const Playlist = ({ playlistId, onClose }) => {
+    const [isVisible, setVisible] = useState(true);
+    const {
+        trackQueue,
+        addToQueue,
+        addToLast,
+        clearTrackQueue,
+        currentTrack,
+        setCurrentTrack
+    } = useTrackQueue();
+
+    const fetchPlaylistInfo = async () => {
+        if (!playlistId) return;
+
+        try {
+            const response = await axios.get(
+                `https://server-playnow-production.up.railway.app/musicapis/ytmusic/playlist/${playlistId}`
+            );
+            if (response.data) {
+                return response.data;
+            }
+        } catch (error) {
+            console.error("Error fetching playlist info:", error);
+            return;
+        }
+    };
+
+    const { data: playlistInfo, isLoading } = useQuery({
+        queryKey: ["playlistInfo", playlistId],
+        queryFn: fetchPlaylistInfo,
+        enabled: !!playlistId,
+        cacheTime: 1000 * 60 * 30
+    });
+    const autoQueuePlaylist = () => {
+        clearTrackQueue();
+        setCurrentTrack(playlistInfo?.videos[0]?.id);
+        if (playlistInfo?.videos?.length > 1) {
+            playlistInfo.videos.slice(1).forEach((vid, idx) => {
+                setTimeout(() => addToLast(vid.id), idx * 999);
+            });
+        }
+    };
+
+    useEffect(() => {
+        autoQueuePlaylist();
+    }, [playlistId, playlistInfo]);
+    /* 
+    Default function when the arrow down button is clicked 
+    and onClose function is not defined.
+  */
+    const closePlaylist = () => setVisible(false);
+
+    return (
+        <>
+            {isVisible && (
+                <div className="playlist-container">
+                    <div className="top-ctrls">
+                        <IconButton
+                            className="top-ctrl-btn"
+                            onClick={onClose ? onClose : closePlaylist}>
+                            <ArrowDropDownIcon className="icons-top" />
+                        </IconButton>
+                    </div>
+
+                    <div className="playlist-info">
+                        {playlistInfo && (
+                            <>
+                                <img
+                                    className="thumbnail"
+                                    src={playlistInfo?.thumbnail?.url}
+                                    alt="Playlist Thumbnail"
+                                />
+                                <span className="title">
+                                    {playlistInfo?.title}
+                                </span>
+                                <span>{playlistInfo?.channel?.name}</span>
+                            </>
+                        )}
+                    </div>
+
+                    <div className="playlist-ctrls">
+                        <div onClick={autoQueuePlaylist} className="play-btn">
+                            <PlayArrowIcon className="playbtn-icon" />
+                            <span className="play-btn-text">Play</span>
+                        </div>
+                    </div>
+
+                    <div className="music-list">
+                        {playlistInfo?.videos?.map(vid => (
+                            <div key={vid.id} className="music-card">
+                                <div className="music-info">
+                                    <IconButton className="thumbnail">
+                                        <div
+                                            style={{
+                                                position: "absolute",
+                                                height: "50px",
+                                                width: "50px",
+                                                borderRadius: "8px",
+                                                backgroundImage: `url(${vid.thumbnail.url})`,
+                                                backgroundSize: "cover",
+                                                backgroundPosition: "center",
+                                                backgroundRepeat: "no-repeat",
+                                                opacity: 0.5
+                                            }}
+                                        />
+                                        {vid.id === currentTrack ? (
+                                            <PauseIcon
+                                                style={{
+                                                    color: "var(--text-color)",
+                                                    height: "30px",
+                                                    width: "30px",
+                                                    zIndex: 1
+                                                }}
+                                            />
+                                        ) : (
+                                            <PlayArrowIcon
+                                                onClick={() =>
+                                                    addToQueue(vid.id)
+                                                }
+                                                style={{
+                                                    color: "var(--text-color)",
+                                                    height: "30px",
+                                                    width: "30px",
+                                                    zIndex: 1
+                                                }}
+                                            />
+                                        )}
+                                    </IconButton>
+                                    <div className="music-info-ttl">
+                                        <span>{vid?.title}</span>
+                                        <span>{vid?.channel?.name}</span>
+                                    </div>
+                                </div>
+                                <div className="music-opts">
+                                    <IconButton>
+                                        <MoreVertIcon className="icon-btn" />
+                                    </IconButton>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </>
+    );
+};

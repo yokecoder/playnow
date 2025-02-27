@@ -1,4 +1,4 @@
-import useTheme from "./theme";
+import useTheme from "../utils/theme";
 import { Icon, IconButton } from "@mui/material";
 import { DarkMode, LightMode } from "@mui/icons-material";
 import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
