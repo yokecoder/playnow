@@ -16,7 +16,7 @@ export default function Music() {
     return (
         <>
             <SearchBar
-                hint="Search for songs,playlist,albums, "
+                hint="Search for songs,playlist,albums, etc.. "
                 value={search}
                 onChange={setSearch}
                 onCancel={() => setSearch("")}
