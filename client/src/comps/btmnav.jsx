@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { IconButton } from "@mui/material";
-import DownloadIcon from "@mui/icons-material/Download";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import LibraryMusicIcon from "@mui/icons-material/LibraryMusic";
 import MusicNoteIcon from "@mui/icons-material/MusicNote";
 import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
 

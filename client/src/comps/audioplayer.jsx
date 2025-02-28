@@ -384,18 +384,21 @@ export const Playlist = ({ playlistId, onClose }) => {
     });
     const autoQueuePlaylist = () => {
         clearTrackQueue();
-        setCurrentTrack(playlistInfo?.videos[0]?.id);
-        if (playlistInfo?.videos?.length > 1) {
-            playlistInfo.videos.slice(1).forEach((vid, idx) => {
-                setTimeout(() => addToLast(vid.id), idx * 999);
-            });
-        }
+        const videos = playlistInfo?.videos;
+
+        if (!videos || videos.length === 0) return;
+
+        setCurrentTrack(videos[0].id); // Play the first track
+
+        videos.slice(1).forEach((vid, idx) => {
+            setTimeout(() => addToLast(vid.id), (idx + 1) * 1000); // Maintain order properly
+        });
     };
 
     useEffect(() => {
         autoQueuePlaylist();
     }, [playlistId, playlistInfo]);
-    
+
     /* 
     Default function when the arrow down button is clicked 
     and onClose function is not defined.
@@ -419,7 +422,11 @@ export const Playlist = ({ playlistId, onClose }) => {
                             <>
                                 <img
                                     className="thumbnail"
-                                    src={playlistInfo?.thumbnail?.url}
+                                    src={
+                                        playlistInfo?.thumbnail?.url ||
+                                        playlistInfo?.videos?.[0]?.thumbnail
+                                            ?.url
+                                    }
                                     alt="Playlist Thumbnail"
                                 />
                                 <span className="title">
@@ -456,18 +463,15 @@ export const Playlist = ({ playlistId, onClose }) => {
                                             }}
                                         />
                                         {vid.id === currentTrack ? (
-                                            <PauseIcon
-                                                style={{
-                                                    color: "var(--text-color)",
-                                                    height: "30px",
-                                                    width: "30px",
-                                                    zIndex: 1
-                                                }}
-                                            />
+                                            <div class="waveform">
+                                                <div class="bar"></div>
+                                                <div class="bar"></div>
+                                                <div class="bar"></div>
+                                            </div>
                                         ) : (
                                             <PlayArrowIcon
                                                 onClick={() =>
-                                                    addToQueue(vid.id)
+                                                    setCurrentTrack(vid.id)
                                                 }
                                                 style={{
                                                     color: "var(--text-color)",

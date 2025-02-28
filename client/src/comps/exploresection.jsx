@@ -6,10 +6,9 @@ import altThumbnail from "../assets/file-QNciSaNA8MjnmGcSFXo8UM.webp";
 
 export default function ExploreSection({ caption, children }) {
     return (
-        <div className="category">
+        <div className="explore-section">
             <div className="title">
                 <span> {caption} </span>
-                <ChevronRightIcon className="icon-btn" />
             </div>
             <div className="carousel">{children}</div>
         </div>
@@ -19,10 +18,9 @@ export default function ExploreSection({ caption, children }) {
 export const ExploreCard = ({
     title,
     thumbnail,
-    refUrl,
-    type,
-    artist,
-    year
+    desc,
+    handlePlay,
+    ctrls = true
 }) => {
     return (
         <div className="carousel-card-1">
@@ -30,17 +28,20 @@ export const ExploreCard = ({
                 className="carousel-card-img"
                 src={!thumbnail ? altThumbnail : thumbnail}
             />
-            <span className="card-title">
-                {title?.trim().split(/\s+/).slice(0, 3).join(" ")}
-            </span>
-            <span className="card-type">
-                {type?.toLowerCase()} • {artist} {year}
-            </span>
-            <div className="card-ctrls">
-                <IconButton onClick={handlePlay}>
-                    <PlayArrowIcon className="icon-btn" />{" "}
-                </IconButton>
+            <div className="card-info">
+                <span className="card-title">
+                    {title?.trim().split(/\s+/).slice(0, 3).join(" ")}
+                </span>
+                <span className="card-type">{desc}</span>
             </div>
+
+            {ctrls && (
+                <div className="card-ctrls">
+                    <IconButton onClick={handlePlay}>
+                        <PlayArrowIcon className="icon-btn" />{" "}
+                    </IconButton>
+                </div>
+            )}
         </div>
     );
 };

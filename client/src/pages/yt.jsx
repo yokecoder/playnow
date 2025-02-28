@@ -1,22 +1,30 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import SearchBar from "../comps/searchbar";
 import YtPlayer from "../comps/videoplayer";
 import axios from "axios";
 import { useQuery } from "@tanstack/react-query";
 
 export default function Yt() {
-    const [search, setSearch] = useState(""); // Input value
+    const [search, setSearch] = useState("");
 
-    // Utility functions
+    // Check if input is a YouTube link or playlist
     const isLink = useCallback(() => search.startsWith("http"), [search]);
     const isPlaylist = useCallback(
         () => isLink() && search.includes("list="),
         [search]
     );
 
+    // Delayed fetch to avoid frequent re-renders
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setSearch(prev => prev.trim());
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [search]);
+
     // Fetch videos
     const fetchVideos = async () => {
-        if (!search.trim()) return [];
+        if (!search) return [];
 
         let endpoint = "";
         let method = "GET";
@@ -28,7 +36,7 @@ export default function Yt() {
                 method = "POST";
                 requestData = { url: search };
             } else {
-                return []; // Invalid link case (not a playlist)
+                return [];
             }
         } else {
             endpoint = `ytapis/search?query=${encodeURIComponent(search)}`;
@@ -46,8 +54,8 @@ export default function Yt() {
     const { data: videoQueue = [], isFetching } = useQuery({
         queryKey: ["videos", search],
         queryFn: fetchVideos,
-        enabled: !!search.trim(),
-        staleTime: 1000 * 60 * 5 // Cache for 5 mins
+        enabled: !!search,
+        staleTime: 1000 * 60 * 5
     });
 
     return (
@@ -64,19 +72,16 @@ export default function Yt() {
                     <p>Search videos or paste a video link to get started!</p>
                 )}
 
-                {/* Handle Single Video Link */}
                 {search && isLink() && !isPlaylist() && (
                     <YtPlayer url={search} />
                 )}
 
-                {/* Loading Indicator */}
                 {isFetching && (
                     <div className="loader-container">
                         <div className="loader"></div>
                     </div>
                 )}
 
-                {/* Render Playlists */}
                 {search &&
                     isLink() &&
                     isPlaylist() &&
@@ -84,7 +89,6 @@ export default function Yt() {
                         <YtPlayer key={index} url={video.shortUrl} />
                     ))}
 
-                {/* Render Search Results */}
                 {search &&
                     !isLink() &&
                     videoQueue.map((video, index) => {

@@ -13,7 +13,7 @@ export default function TopNavBar() {
                     <Icon className="topnav-icon-btn">
                         <PlayCircleOutlineIcon />
                     </Icon>
-                    <span className="title-text">PlayNow</span>
+                    <span>PlayNow</span>
                 </div>
                 <IconButton className="topnav-icon-btn" onClick={toggleTheme}>
                     {theme === "dark" ? <LightMode /> : <DarkMode />}
