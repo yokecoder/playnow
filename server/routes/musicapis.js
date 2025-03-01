@@ -12,7 +12,7 @@ const ytmusic = new YTMusic();
     try {
         await ytmusic.initialize();
 
-        console.log("YTMusic API initialized successfully!");
+        //console.log("YTMusic API initialized successfully!");
     } catch (error) {
         console.error("YTMusic API initialization failed:", error);
     }
@@ -23,24 +23,64 @@ const ytmusic = new YTMusic();
 router.get("/ytmusic/search/", async (req, res) => {
     try {
         const query = req.query.query;
+        
         if (!query) {
             return res
                 .status(400)
                 .json({ error: "Query parameter is required" });
         }
 
-        const results = await ytmusic.search(query);
+        // Ensure initialization
 
+        // Use null or 'all' for mixed results and include the limit
+        const results = await ytmusic.search(query, 'all');
+        
         if (!results || results.length === 0) {
             return res.status(404).json({ error: "No results found" });
         }
-
+        
         res.json(results);
     } catch (error) {
         console.error("Error in search:", error.message);
         res.status(500).json({ error: error.message });
     }
 });
+
+
+router.get("/ytmusic/advsearch/", async (req, res) => {
+    try {
+        const query = req.query.query;
+        const limit = parseInt(req.query.limit) || 50; // Ensure limit is a number
+
+        if (!query) {
+            return res.status(400).json({ error: "Query parameter is required" });
+        }
+
+        await ytmusic.initialize(); // Ensure initialization
+
+        let allResults = [];
+
+        // Perform multiple searches with slight variations
+        const variations = [query, `${query} official audio`, `${query} lyrics`, `${query} HD`];
+
+        for (let variation of variations) {
+            let results = await ytmusic.search(variation, null, 15);
+            allResults.push(...results);
+            if (allResults.length >= limit) break; // Stop if we reach the limit
+        }
+        
+       
+       
+        // Remove duplicates based on videoId or title
+        const uniqueResults = Array.from(new Map(allResults.map(item => [item.videoId, item])).values());
+        
+        res.json(allResults);
+    } catch (error) {
+        console.error("Error in search:", error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 
 // 🎶 2. Get Song Details
 router.get("/ytmusic/track/:id", async (req, res) => {

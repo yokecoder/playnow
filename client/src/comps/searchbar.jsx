@@ -60,7 +60,7 @@ export const MusicSearch = ({ hint, search, onChange, isOpen, onClose }) => {
         if (!search) return null;
         try {
             const response = await axios.get(
-                `https://server-playnow-production.up.railway.app/musicapis/ytmusic/search?query=${search}`
+                `https://server-playnow-production.up.railway.app/musicapis/ytmusic/advsearch?query=${search}`
             );
             return response.data;
         } catch (error) {
