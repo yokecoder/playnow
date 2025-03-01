@@ -55,27 +55,21 @@ router.get("/ytmusic/advsearch/", async (req, res) => {
             return res.status(400).json({ error: "Query parameter is required" });
         }
 
-        let allResults = [];
+        // Perform separate searches to get maximum results
+        const [trackResults, albumResults, playlistResults, artistResults] = await Promise.all([
+            ytmusic.search(query, "songs", limit),
+            ytmusic.search(query, "albums", limit),
+            ytmusic.search(query, "playlists", limit),
+            ytmusic.search(query, "artists", limit),
+        ]);
 
-        // Search variations to cover different types of results
-        const variations = [
-            query, 
-            `${query} official audio`, 
-            `${query} lyrics`, 
-            `${query} HD`, 
-            `${query} remix`, 
-            `${query} slowed`, 
-            `${query} instrumental`
-        ];
+        // Combine all results into a single array
+        let allResults = [...trackResults, ...albumResults, ...playlistResults, ...artistResults];
 
-        for (let variation of variations) {
-            let results = await ytmusic.search(variation, null, 15);
-            allResults.push(...results);
-            if (allResults.length >= limit) break; // Stop fetching if we reach the limit
-        }
-
-        // Remove duplicates based on `videoId`
-        const uniqueResults = Array.from(new Map(allResults.map(item => [item.videoId, item])).values()).slice(0, limit);
+        // Remove duplicates based on `videoId`, `playlistId`, or `browseId`
+        const uniqueResults = Array.from(new Map(
+            allResults.map(item => [item.videoId || item.playlistId || item.artistId, item])
+        ).values()).slice(0, limit); // Ensure the final results respect the limit
 
         res.json(uniqueResults);
     } catch (error) {
