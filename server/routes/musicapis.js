@@ -12,7 +12,7 @@ const ytmusic = new YTMusic();
     try {
         await ytmusic.initialize();
 
-        //console.log("YTMusic API initialized successfully!");
+        console.log("YTMusic API initialized successfully!");
     } catch (error) {
         console.error("YTMusic API initialization failed:", error);
     }
@@ -56,8 +56,7 @@ router.get("/ytmusic/advsearch/", async (req, res) => {
             return res.status(400).json({ error: "Query parameter is required" });
         }
 
-        await ytmusic.initialize(); // Ensure initialization
-
+        
         let allResults = [];
 
         // Perform multiple searches with slight variations
@@ -72,9 +71,9 @@ router.get("/ytmusic/advsearch/", async (req, res) => {
        
        
         // Remove duplicates based on videoId or title
-        const uniqueResults = Array.from(new Map(allResults.map(item => [item.videoId, item])).values());
+        const uniqueResults = Array.from(new Map(allResults.map(item => [item.videoId])).values());
         
-        res.json(allResults);
+        res.json(uniqueResults);
     } catch (error) {
         console.error("Error in search:", error.message);
         res.status(500).json({ error: error.message });
