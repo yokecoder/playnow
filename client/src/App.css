@@ -435,14 +435,16 @@ p {
 
 .playlist-container .playlist-info {
     /* Allow shrinking and growing */
+
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 5px !important;
     height: auto;
+    max-height: 200px;
 
-    transition: flex 0.3s ease-in-out; /* Smooth transition */
+    /* Smooth transition */
 }
 
 .playlist-container .hidden {
@@ -454,7 +456,7 @@ p {
     width: 150px;
 }
 .playlist-container .title {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: bold;
     text-align: center;
 }
@@ -492,13 +494,15 @@ p {
     font-size: 22px;
 }
 .playlist-container .music-list {
+    flex: 1  0 auto;
     display: flex;
     align-items: center;
     flex-direction: column;
-    min-height: 220px;
+    height: auto;
+    max-height: 220px;
     overflow-x: hidden;
     overflow-y: auto;
-    transition: flex 0.3s ease-in-out;
+    padding-bottom: 250px;
 }
 .music-list .music-card,
 .search-result-songs .music-card {
@@ -643,6 +647,8 @@ p {
     gap: 15px;
     overflow-x: hidden;
     overflow-y: scroll;
+    height: auto;
+    max-height: 50vh;
 }
 .music-search-container .result-card {
     display: flex;

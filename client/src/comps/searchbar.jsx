@@ -4,6 +4,7 @@ import { IconButton } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import CancelIcon from "@mui/icons-material/Cancel";
 import CloseIcon from "@mui/icons-material/Close";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import axios from "axios";
 import ExploreSection, { ExploreCard } from "./exploresection";
 import { Playlist } from "./audioplayer";
@@ -131,18 +132,50 @@ export const MusicSearch = ({ hint, search, onChange, isOpen, onClose }) => {
                                         <span className="title">Songs</span>
                                         {groupedResults?.song?.map(data => (
                                             <>
-                                                <div
-                                                    onClick={() =>
-                                                        addToQueue(data.videoId)
-                                                    }
-                                                    className="music-card">
-                                                    <img
-                                                        src={
-                                                            data.thumbnails[0]
-                                                                .url
-                                                        }
-                                                        className="thumbnail"
-                                                    />
+                                                <div className="music-card">
+                                                    <IconButton className="thumbnail">
+                                                        <div
+                                                            style={{
+                                                                position:
+                                                                    "absolute",
+                                                                height: "50px",
+                                                                width: "50px",
+                                                                borderRadius:
+                                                                    "8px",
+                                                                backgroundImage: `url(${data?.thumbnails[0]?.url})`,
+                                                                backgroundSize:
+                                                                    "cover",
+                                                                backgroundPosition:
+                                                                    "center",
+                                                                backgroundRepeat:
+                                                                    "no-repeat",
+                                                                opacity: 0.5
+                                                            }}
+                                                        />
+                                                        {data?.videoId ===
+                                                        currentTrack ? (
+                                                            <div className="waveform">
+                                                                <div className="bar"></div>
+                                                                <div className="bar"></div>
+                                                                <div className="bar"></div>
+                                                                <div className="bar"></div>
+                                                            </div>
+                                                        ) : (
+                                                            <PlayArrowIcon
+                                                                onClick={() =>
+                                                                    addToQueue(
+                                                                        data?.videoId
+                                                                    )
+                                                                }
+                                                                style={{
+                                                                    color: "var(--text-color)",
+                                                                    height: "30px",
+                                                                    width: "30px",
+                                                                    zIndex: 1
+                                                                }}
+                                                            />
+                                                        )}
+                                                    </IconButton>
                                                     <div className="music-info-ttl">
                                                         <span>
                                                             {data?.name}
@@ -166,7 +199,8 @@ export const MusicSearch = ({ hint, search, onChange, isOpen, onClose }) => {
                                                     data.thumbnails?.[
                                                         data.thumbnails
                                                             ?.length - 1
-                                                    ]?.url
+                                                    ]?.url ||
+                                                    data?.thumbnails?.[0]?.url
                                                 }
                                                 desc={`${data.type?.toLowerCase()} • ${
                                                     data.artist?.name
@@ -190,7 +224,8 @@ export const MusicSearch = ({ hint, search, onChange, isOpen, onClose }) => {
                                                     data.thumbnails[
                                                         data.thumbnails.length -
                                                             1
-                                                    ].url
+                                                    ].url ||
+                                                    data?.thumbnails?.[0]?.url
                                                 }
                                                 desc={`${data.type?.toLowerCase()} • ${
                                                     data.artist?.name

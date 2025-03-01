@@ -402,93 +402,114 @@ export const Playlist = ({ playlistId, onClose }) => {
         <>
             {isVisible && (
                 <div className="playlist-container">
-                    <div className="top-ctrls">
-                        <IconButton
-                            className="top-ctrl-btn"
-                            onClick={onClose ? onClose : closePlaylist}>
-                            <ArrowDropDownIcon className="icons-top" />
-                        </IconButton>
-                    </div>
-
-                    <div className="playlist-info">
-                        {playlistInfo && (
-                            <>
-                                <img
-                                    className="thumbnail"
-                                    src={
-                                        playlistInfo?.thumbnail?.url ||
-                                        playlistInfo?.videos?.[0]?.thumbnail
-                                            ?.url
-                                    }
-                                    alt="Playlist Thumbnail"
-                                />
-                                <span className="title">
-                                    {playlistInfo?.title}
-                                </span>
-                                <span>{playlistInfo?.channel?.name}</span>
-                            </>
-                        )}
-                    </div>
-
-                    <div className="playlist-ctrls">
-                        <div onClick={autoQueuePlaylist} className="play-btn">
-                            <PlayArrowIcon className="playbtn-icon" />
-                            <span className="play-btn-text">Play</span>
+                    {/* Loading Animation */}
+                    {isLoading && (
+                        <div className="loader-container">
+                            <div className="loader"></div>
                         </div>
-                    </div>
+                    )}
 
-                    <div className="music-list">
-                        {playlistInfo?.videos?.map(vid => (
-                            <div key={vid.id} className="music-card">
-                                <div className="music-info">
-                                    <IconButton className="thumbnail">
-                                        <div
-                                            style={{
-                                                position: "absolute",
-                                                height: "50px",
-                                                width: "50px",
-                                                borderRadius: "8px",
-                                                backgroundImage: `url(${vid.thumbnail.url})`,
-                                                backgroundSize: "cover",
-                                                backgroundPosition: "center",
-                                                backgroundRepeat: "no-repeat",
-                                                opacity: 0.5
-                                            }}
+                    {/* Playlist UI */}
+                    {!isLoading && (
+                        <>
+                            <div className="top-ctrls">
+                                <IconButton
+                                    className="top-ctrl-btn"
+                                    onClick={onClose ? onClose : closePlaylist}>
+                                    <ArrowDropDownIcon className="icons-top" />
+                                </IconButton>
+                            </div>
+
+                            <div className="playlist-info">
+                                {playlistInfo && (
+                                    <>
+                                        <img
+                                            className="thumbnail"
+                                            src={
+                                                playlistInfo?.thumbnail?.url ||
+                                                playlistInfo?.videos?.[0]
+                                                    ?.thumbnail?.url
+                                            }
+                                            alt="Playlist Thumbnail"
                                         />
-                                        {vid.id === currentTrack ? (
-                                            <div class="waveform">
-                                                <div class="bar"></div>
-                                                <div class="bar"></div>
-                                                <div class="bar"></div>
-                                                <div class="bar"></div>
-                                            </div>
-                                        ) : (
-                                            <PlayArrowIcon
-                                                onClick={() =>
-                                                    addToQueue(vid.id)
-                                                }
-                                                style={{
-                                                    color: "var(--text-color)",
-                                                    height: "30px",
-                                                    width: "30px",
-                                                    zIndex: 1
-                                                }}
-                                            />
-                                        )}
-                                    </IconButton>
-                                    <div className="music-info-ttl">
-                                        <span>{vid?.title}</span>
-                                        <span>{vid?.channel?.name}</span>
+                                        <span className="title">
+                                            {playlistInfo?.title}
+                                        </span>
+                                        <span>
+                                            {playlistInfo?.channel?.name}
+                                        </span>
+                                    </>
+                                )}
+                                <div className="playlist-ctrls">
+                                    <div
+                                        onClick={autoQueuePlaylist}
+                                        className="play-btn">
+                                        <PlayArrowIcon className="playbtn-icon" />
+                                        <span className="play-btn-text">
+                                            Play
+                                        </span>
                                     </div>
                                 </div>
-                                <div className="music-opts">
-                                    <IconButton>
-                                        <MoreVertIcon className="icon-btn" />
-                                    </IconButton>
-                                </div>
                             </div>
-                        ))}
-                    </div>
+
+                            <div className="music-list">
+                                {playlistInfo?.videos?.map(vid => (
+                                    <div key={vid.id} className="music-card">
+                                        <div className="music-info">
+                                            <IconButton className="thumbnail">
+                                                <div
+                                                    style={{
+                                                        position: "absolute",
+                                                        height: "50px",
+                                                        width: "50px",
+                                                        borderRadius: "8px",
+                                                        backgroundImage: `url(${vid.thumbnail.url})`,
+                                                        backgroundSize: "cover",
+                                                        backgroundPosition:
+                                                            "center",
+                                                        backgroundRepeat:
+                                                            "no-repeat",
+                                                        opacity: 0.5
+                                                    }}
+                                                />
+                                                {vid.id === currentTrack ? (
+                                                    <div className="waveform">
+                                                        <div className="bar"></div>
+                                                        <div className="bar"></div>
+                                                        <div className="bar"></div>
+                                                        <div className="bar"></div>
+                                                    </div>
+                                                ) : (
+                                                    <PlayArrowIcon
+                                                        onClick={() =>
+                                                            addToQueue(vid.id)
+                                                        }
+                                                        style={{
+                                                            color: "var(--text-color)",
+                                                            height: "30px",
+                                                            width: "30px",
+                                                            zIndex: 1
+                                                        }}
+                                                    />
+                                                )}
+                                            </IconButton>
+                                            <div className="music-info-ttl">
+                                                <span>{vid?.title}</span>
+                                                <span>
+                                                    {vid?.channel?.name}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="music-opts">
+                                            <IconButton>
+                                                <MoreVertIcon className="icon-btn" />
+                                            </IconButton>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </>
+                    )}
                 </div>
             )}
         </>
