@@ -493,10 +493,9 @@ p {
 }
 .playlist-container .music-list {
     display: flex;
-    flex: 1;
     align-items: center;
     flex-direction: column;
-    max-height: 200px;
+    min-height: 220px;
     overflow-x: hidden;
     overflow-y: auto;
     transition: flex 0.3s ease-in-out;
