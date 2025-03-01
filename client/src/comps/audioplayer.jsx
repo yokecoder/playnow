@@ -383,21 +383,14 @@ export const Playlist = ({ playlistId, onClose }) => {
         cacheTime: 1000 * 60 * 30
     });
     const autoQueuePlaylist = () => {
-        clearTrackQueue();
         const videos = playlistInfo?.videos;
-
         if (!videos || videos.length === 0) return;
-
-        setCurrentTrack(videos[0].id); // Play the first track
-
+        clearTrackQueue();
+        addToQueue(videos[0].id); // Play the first
         videos.slice(1).forEach((vid, idx) => {
-            setTimeout(() => addToLast(vid.id), (idx + 1) * 1000); // Maintain order properly
+            setTimeout(() => addToLast(vid.id), idx * 999); // Maintain order properly
         });
     };
-
-    useEffect(() => {
-        autoQueuePlaylist();
-    }, [playlistId, playlistInfo]);
 
     /* 
     Default function when the arrow down button is clicked 
@@ -467,11 +460,12 @@ export const Playlist = ({ playlistId, onClose }) => {
                                                 <div class="bar"></div>
                                                 <div class="bar"></div>
                                                 <div class="bar"></div>
+                                                <div class="bar"></div>
                                             </div>
                                         ) : (
                                             <PlayArrowIcon
                                                 onClick={() =>
-                                                    setCurrentTrack(vid.id)
+                                                    addToQueue(vid.id)
                                                 }
                                                 style={{
                                                     color: "var(--text-color)",
