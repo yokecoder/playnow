@@ -46,7 +46,6 @@ router.get("/ytmusic/search/", async (req, res) => {
     }
 });
 
-
 router.get("/ytmusic/advsearch/", async (req, res) => {
     try {
         const query = req.query.query;
@@ -56,29 +55,35 @@ router.get("/ytmusic/advsearch/", async (req, res) => {
             return res.status(400).json({ error: "Query parameter is required" });
         }
 
-        
         let allResults = [];
 
-        // Perform multiple searches with slight variations
-        const variations = [query, `${query} official audio`, `${query} lyrics`, `${query} HD`];
+        // Search variations to cover different types of results
+        const variations = [
+            query, 
+            `${query} official audio`, 
+            `${query} lyrics`, 
+            `${query} HD`, 
+            `${query} remix`, 
+            `${query} slowed`, 
+            `${query} instrumental`
+        ];
 
         for (let variation of variations) {
             let results = await ytmusic.search(variation, null, 15);
             allResults.push(...results);
-            if (allResults.length >= limit) break; // Stop if we reach the limit
+            if (allResults.length >= limit) break; // Stop fetching if we reach the limit
         }
-        
-       
-       
-        // Remove duplicates based on videoId or title
-        const uniqueResults = Array.from(new Map(allResults.map(item => [item.videoId])).values());
-        
+
+        // Remove duplicates based on `videoId`
+        const uniqueResults = Array.from(new Map(allResults.map(item => [item.videoId, item])).values()).slice(0, limit);
+
         res.json(uniqueResults);
     } catch (error) {
-        console.error("Error in search:", error.message);
-        res.status(500).json({ error: error.message });
+        console.error("Error in advanced search:", error.message);
+        res.status(500).json({ error: "An error occurred while searching." });
     }
 });
+
 
 
 // 🎶 2. Get Song Details
