@@ -18,8 +18,7 @@ const ytmusic = new YTMusic();
     }
 })();
 
-// 1. Search for Music (Songs, Albums, Playlists, Artists)
-// * Working
+// 1. Search for Music (Songs, Albums, Playlists, Artists
 router.get("/ytmusic/search/", async (req, res) => {
     try {
         const query = req.query.query;
@@ -160,18 +159,118 @@ router.get("/ytmusic/stream/:id", async (req, res) => {
             dlChunkSize: 32 * 1024
         }).pipe(res);
     } catch (error) {
-        console.error("❌ Stream error:", error.message);
+        console.error(" Stream error:", error.message);
         res.status(500).json({ error: error.message });
     }
 });
 
+
 router.get("/ytmusic/new", async (req, res) => {
     try {
-        const releases = await ytmusic.search("new-releases", "songs");
+        const releases = await ytmusic.search("latest songs", "all");
         res.json(releases);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
+
+router.get("/ytmusic/trending", async (req, res) => {
+    try {
+        const trending = await ytmusic.search("trending songs", "all");
+        res.json(trending);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get("/ytmusic/topcharts", async (req, res) => {
+    try {
+        const topCharts = await ytmusic.search("top charts latest", "all");
+        res.json(topCharts);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get("/ytmusic/topartists", async (req, res) => {
+    try {
+        const topArtists = await ytmusic.search(" artists | singers", "artist");
+        res.json(topArtists);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
+router.get("/ytmusic/topmixes", async (req, res) => {
+    try {
+        const topMixes = await ytmusic.search("top mixes/remixes latest", "all");
+        res.json(topMixes);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get("/ytmusic/genres", async (req, res) => {
+    try {
+        const genres = await ytmusic.search("all genres latest", "all");
+        res.json(genres);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
+
+
+router.get("/ytmusic/moods", async (req, res) => {
+    try {
+        const moods = await ytmusic.search("all moods latest", "all");
+        res.json(moods);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
+router.get("/ytmusic/languages", async (req, res) => {
+    try {
+        const languages = await ytmusic.search("latest all languages", "all");
+        res.json(languages);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get("/ytmusic/genres/:genre", async (req, res) => {
+    const genre = req.params.genre
+    try {
+        const resp = await ytmusic.search(`${type} genre latest`, "all");
+        res.json(resp);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get("/ytmusic/moods/:mood", async (req, res) => {
+    const mood = req.params.mood
+    try {
+        const resp = await ytmusic.search(`${type} mood latest`, "all");
+        res.json(resp);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get("/ytmusic/languages/:lang", async (req, res) => {
+    const lang = req.params.lang
+    try {
+        const resp= await ytmusic.search(`${lang} latest`, "all");
+        res.json(resp);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 
 module.exports = router;

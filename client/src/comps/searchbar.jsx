@@ -53,7 +53,7 @@ export default function SearchBar({
 
 export const MusicSearch = ({ hint, search, onChange, isOpen, onClose }) => {
     const { currentTrack, addToQueue, setCurrentTrack } = useTrackQueue();
-    const [playlisId, setPlaylistId] = useState(null);
+    const [playlistId, setPlaylistId] = useState(null);
     const [isPlaylist, setPlaylist] = useState(false);
 
     const fetchQueryResults = async () => {
@@ -112,6 +112,7 @@ export const MusicSearch = ({ hint, search, onChange, isOpen, onClose }) => {
                             value={search}
                             onChange={e => onChange(e.target.value)}
                             className="search-input-box music-search-input"
+                            autoFocus
                         />
                         <IconButton onClick={refetch}>
                             <SearchIcon className="icon-btn" />
@@ -264,7 +265,7 @@ export const MusicSearch = ({ hint, search, onChange, isOpen, onClose }) => {
             )}
             {isPlaylist && (
                 <Playlist
-                    playlistId={playlisId}
+                    playlistId={playlistId}
                     onClose={() => setPlaylist(false)}
                 />
             )}

@@ -10,21 +10,29 @@ import axios from "axios";
 export default function Music() {
     const [search, setSearch] = useState("");
     const [isSearchOpen, setSearchOpen] = useState(false);
+    const [isPlaylistOpen, setPlaylistOpen] = useState(false);
+    const [playlistId, setPlaylistId] = useState(null);
     const { currentTrack, trackQueue, prevTrackQueue, setCurrentTrack } =
         useTrackQueue();
 
+    const openPlaylist = id => {
+        setPlaylistId(id);
+        setPlaylistOpen(true);
+    };
+
     return (
         <>
-            <SearchBar
-                hint="Search for songs,playlist,albums, etc.. "
-                value={search}
-                onChange={setSearch}
-                onCancel={() => setSearch("")}
-                onFocus={() => setSearchOpen(true)}
-            />
+            <div className="music-explore-bar">
+                <h2>Explore Music</h2>
+                <IconButton
+                    className="icon-btn "
+                    onClick={() => setSearchOpen(true)}>
+                    <SearchIcon className="music-search-icon" />
+                </IconButton>
+            </div>
 
             <MusicSearch
-                hint="Search for songs,playlist,albums"
+                hint="Search for songs,playlist,albums,etc..."
                 search={search}
                 onChange={setSearch}
                 isOpen={isSearchOpen}
@@ -34,6 +42,12 @@ export default function Music() {
                 }}
             />
 
+            {isPlaylistOpen && (
+                <Playlist
+                    playlistId={playlistId}
+                    onClose={() => setPlaylistOpen(false)}
+                />
+            )}
             {currentTrack && <AudioPlayer trackId={currentTrack} />}
         </>
     );

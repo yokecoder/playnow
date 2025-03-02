@@ -13,6 +13,10 @@ const YtPlayer = ({ url }) => {
     const downloadUrl = `https://server-playnow-production.up.railway.app/ytapis/dl?url=${encodeURIComponent(
         url
     )}&fmt=${format}&res=${resolution}`;
+    const getEmbedUrl = vurl =>
+        `https://www.youtube-nocookie.com/embed/${
+            vurl.match(/(?:v=|\/)([0-9A-Za-z_-]{11})/)[1]
+        }`;
 
     return (
         <>
@@ -28,7 +32,12 @@ const YtPlayer = ({ url }) => {
                     theme="dark"
                 />
 
-                <ReactPlayer url={url} controls height="180px" width="320px" />
+                <ReactPlayer
+                    url={getEmbedUrl(url)}
+                    controls
+                    height="180px"
+                    width="320px"
+                />
                 <div className="player-actions">
                     <Select
                         className="player-format-select"
