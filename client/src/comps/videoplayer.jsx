@@ -10,7 +10,7 @@ const YtPlayer = ({ url }) => {
     const [resolution, setResolution] = useState("480p");
 
     const downloadUrl = `https://server-playnow-production.up.railway.app/ytapis/dl?url=${encodeURIComponent(
-        url || ""
+        url
     )}&fmt=${format}&res=${resolution}`;
 
     // Memoized function to avoid unnecessary re-renders
@@ -35,12 +35,7 @@ const YtPlayer = ({ url }) => {
                 theme="dark"
             />
 
-            <ReactPlayer
-                url={ url}
-                controls
-                height="180px"
-                width="320px"
-            />
+            <ReactPlayer url={url} controls height="180px" width="320px" />
 
             <div className="player-actions">
                 <Select
