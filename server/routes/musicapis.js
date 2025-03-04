@@ -6,13 +6,33 @@ const play = require("play-dl");
 
 const router = express.Router();
 
+const youtubeHeadersMiddleware = (req, res, next) => {
+    req.ytdlOptions = {
+        requestOptions: {
+            headers: {
+                "User Agent":
+                    "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36",
+                Referer: "https://www.youtube.com/",
+                Cookie: "VISITOR_INFO1_LIVE=OgRU3YHghK8; YSC=gb2dKlvocOs; PREF=tz=Asia.Calcutta",
+                "Accept-Language": "en-US,en;q=0.9",
+                Connection: "keep-alive"
+            }
+        }
+    };
+    next();
+};
 
+router.use("/musicapis", youtubeHeadersMiddleware);
 
 // Initialize YTMusic with cookies
 const ytmusic = new YTMusic();
 (async () => {
     try {
-        await ytmusic.initialize();
+        await ytmusic.initialize({
+            headers: {
+                Cookie: "VISITOR_INFO1_LIVE=OgRU3YHghK8; YSC=gb2dKlvocOs; PREF=tz=Asia.Calcutta"
+            }
+        });
         console.log("YTMusic API initialized successfully with cookies!");
     } catch (error) {
         console.error("YTMusic API initialization failed:", error);
@@ -23,10 +43,14 @@ const ytmusic = new YTMusic();
 router.get("/ytmusic/search/", async (req, res) => {
     try {
         const query = req.query.query;
-        if (!query) return res.status(400).json({ error: "Query parameter is required" });
+        if (!query)
+            return res
+                .status(400)
+                .json({ error: "Query parameter is required" });
 
         const results = await ytmusic.search(query, "all");
-        if (!results || results.length === 0) return res.status(404).json({ error: "No results found" });
+        if (!results || results.length === 0)
+            return res.status(404).json({ error: "No results found" });
 
         res.json(results);
     } catch (error) {
@@ -40,17 +64,33 @@ router.get("/ytmusic/advsearch/", async (req, res) => {
     try {
         const query = req.query.query;
         const limit = parseInt(req.query.limit) || 50;
-        if (!query) return res.status(400).json({ error: "Query parameter is required" });
+        if (!query)
+            return res
+                .status(400)
+                .json({ error: "Query parameter is required" });
 
-        const [trackResults, albumResults, playlistResults, artistResults] = await Promise.all([
-            ytmusic.search(query, "songs", limit),
-            ytmusic.search(query, "albums", limit),
-            ytmusic.search(query, "playlists", limit),
-            ytmusic.search(query, "artists", limit)
-        ]);
+        const [trackResults, albumResults, playlistResults, artistResults] =
+            await Promise.all([
+                ytmusic.search(query, "songs", limit),
+                ytmusic.search(query, "albums", limit),
+                ytmusic.search(query, "playlists", limit),
+                ytmusic.search(query, "artists", limit)
+            ]);
 
-        let allResults = [...trackResults, ...albumResults, ...playlistResults, ...artistResults];
-        const uniqueResults = Array.from(new Map(allResults.map(item => [item.videoId || item.playlistId || item.artistId, item])).values()).slice(0, limit);
+        let allResults = [
+            ...trackResults,
+            ...albumResults,
+            ...playlistResults,
+            ...artistResults
+        ];
+        const uniqueResults = Array.from(
+            new Map(
+                allResults.map(item => [
+                    item.videoId || item.playlistId || item.artistId,
+                    item
+                ])
+            ).values()
+        ).slice(0, limit);
 
         res.json(uniqueResults);
     } catch (error) {
@@ -72,8 +112,14 @@ router.get("/ytmusic/track/:id", async (req, res) => {
 // 4. Playlist Details
 router.get("/ytmusic/playlist/:id", async (req, res) => {
     try {
-        const playlist = await play.playlist_info(`https://music.youtube.com/playlist?list=${req.params.id}`, { incomplete: true });
-        if (!playlist || !playlist.title) return res.status(404).json({ error: "Playlist not found or unavailable" });
+        const playlist = await play.playlist_info(
+            `https://music.youtube.com/playlist?list=${req.params.id}`,
+            { incomplete: true }
+        );
+        if (!playlist || !playlist.title)
+            return res
+                .status(404)
+                .json({ error: "Playlist not found or unavailable" });
 
         res.json(playlist);
     } catch (error) {
@@ -119,7 +165,7 @@ router.get("/ytmusic/stream/:id", async (req, res) => {
             quality: "highestaudio",
             highWaterMark: 24 * 1024,
             dlChunkSize: 32 * 1024,
-           
+            ...req.ytdlOptions
         }).pipe(res);
     } catch (error) {
         console.error("Stream error:", error.message);
@@ -128,7 +174,16 @@ router.get("/ytmusic/stream/:id", async (req, res) => {
 });
 
 // 8. Category-based APIs
-const categories = ["new", "trending", "topcharts", "topartists", "topmixes", "genres", "moods", "languages"];
+const categories = [
+    "new",
+    "trending",
+    "topcharts",
+    "topartists",
+    "topmixes",
+    "genres",
+    "moods",
+    "languages"
+];
 categories.forEach(category => {
     router.get(`/ytmusic/${category}`, async (req, res) => {
         try {
@@ -143,7 +198,10 @@ categories.forEach(category => {
 // 9. Dynamic Genre, Mood, and Language Search
 router.get("/ytmusic/genres/:genre", async (req, res) => {
     try {
-        const resp = await ytmusic.search(`${req.params.genre} genre latest`, "all");
+        const resp = await ytmusic.search(
+            `${req.params.genre} genre latest`,
+            "all"
+        );
         res.json(resp);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -152,7 +210,10 @@ router.get("/ytmusic/genres/:genre", async (req, res) => {
 
 router.get("/ytmusic/moods/:mood", async (req, res) => {
     try {
-        const resp = await ytmusic.search(`${req.params.mood} mood latest`, "all");
+        const resp = await ytmusic.search(
+            `${req.params.mood} mood latest`,
+            "all"
+        );
         res.json(resp);
     } catch (error) {
         res.status(500).json({ error: error.message });
