@@ -12,6 +12,7 @@ const YtPlayer = ({ url }) => {
     const downloadUrl = `https://server-playnow-production.up.railway.app/ytapis/dl?url=${encodeURIComponent(
         url
     )}&fmt=${format}&res=${resolution}`;
+<<<<<<< HEAD
 
     // Memoized function to avoid unnecessary re-renders
     const getEmbedUrl = useCallback(vurl => {
@@ -21,6 +22,8 @@ const YtPlayer = ({ url }) => {
             ? `https://www.youtube-nocookie.com/embed/${match[1]}`
             : "";
     }, []);
+=======
+>>>>>>> parent of 7bdce1e (created explore apis)
 
     return (
         <div className="video-player">
@@ -35,6 +38,7 @@ const YtPlayer = ({ url }) => {
                 theme="dark"
             />
 
+<<<<<<< HEAD
             <ReactPlayer url={url} controls height="180px" width="320px" />
 
             <div className="player-actions">
@@ -48,6 +52,10 @@ const YtPlayer = ({ url }) => {
                 </Select>
 
                 {format === "video" && (
+=======
+                <ReactPlayer url={url} controls height="180px" width="320px" />
+                <div className="player-actions">
+>>>>>>> parent of 7bdce1e (created explore apis)
                     <Select
                         className="player-format-select"
                         value={resolution}

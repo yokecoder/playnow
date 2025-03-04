@@ -49,8 +49,14 @@ const ytmusic = new YTMusic();
     }
 })();
 
+<<<<<<< HEAD
 // 1. Search for Music
 router.get("/ytmusic/search/", proxyMiddleware, async (req, res) => {
+=======
+// 1. Search for Music (Songs, Albums, Playlists, Artists)
+// * Working
+router.get("/ytmusic/search/", async (req, res) => {
+>>>>>>> parent of 7bdce1e (created explore apis)
     try {
         const query = req.query.query;
         if (!query)
@@ -194,6 +200,7 @@ router.get("/ytmusic/stream/:id", proxyMiddleware, async (req, res) => {
             dlChunkSize: 32 * 1024
         }).pipe(res);
     } catch (error) {
+<<<<<<< HEAD
         console.error("Stream error:", error.message);
         res.status(500).json({ error: error.message });
     }
@@ -261,4 +268,20 @@ router.get("/ytmusic/languages/:lang", proxyMiddleware, async (req, res) => {
     }
 });
 
+=======
+        console.error("❌ Stream error:", error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get("/ytmusic/new", async (req, res) => {
+    try {
+        const releases = await ytmusic.search("new-releases", "songs");
+        res.json(releases);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+>>>>>>> parent of 7bdce1e (created explore apis)
 module.exports = router;

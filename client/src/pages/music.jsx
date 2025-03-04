@@ -11,6 +11,7 @@ import axios from "axios";
 export default function Music() {
     const [search, setSearch] = useState("");
     const [isSearchOpen, setSearchOpen] = useState(false);
+<<<<<<< HEAD
     const [isPlaylistOpen, setPlaylistOpen] = useState(false);
     const [playlistId, setPlaylistId] = useState(null);
     const { currentTrack, addToQueue } = useTrackQueue();
@@ -265,9 +266,23 @@ export default function Music() {
                     </>
                 )}
             </div>
+=======
+    const { currentTrack, trackQueue, prevTrackQueue, setCurrentTrack } =
+        useTrackQueue();
+
+    return (
+        <>
+            <SearchBar
+                hint="Search for songs,playlist,albums, etc.. "
+                value={search}
+                onChange={setSearch}
+                onCancel={() => setSearch("")}
+                onFocus={() => setSearchOpen(true)}
+            />
+>>>>>>> parent of 7bdce1e (created explore apis)
 
             <MusicSearch
-                hint="Search for songs,playlist,albums,etc..."
+                hint="Search for songs,playlist,albums"
                 search={search}
                 onChange={setSearch}
                 isOpen={isSearchOpen}
@@ -277,12 +292,6 @@ export default function Music() {
                 }}
             />
 
-            {isPlaylistOpen && (
-                <Playlist
-                    playlistId={playlistId}
-                    onClose={() => setPlaylistOpen(false)}
-                />
-            )}
             {currentTrack && <AudioPlayer trackId={currentTrack} />}
         </>
     );
