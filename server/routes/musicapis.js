@@ -6,38 +6,52 @@ const play = require("play-dl");
 
 const router = express.Router();
 
+const youtubeHeadersMiddleware = (req, res, next) => {
+    req.ytdlOptions = {
+        requestOptions: {
+            headers: {
+                "User-Agent":
+                    "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36",
+                Referer: "https://www.youtube.com/",
+                Cookie: "VISITOR_INFO1_LIVE=OgRU3YHghK8; YSC=gb2dKlvocOs; PREF=tz=Asia.Calcutta",
+                "Accept-Language": "en-US,en;q=0.9",
+                Connection: "keep-alive"
+            }
+        }
+    };
+    next();
+};
+
+// Initialize YTMusic with cookies
 const ytmusic = new YTMusic();
-// Initialize YTMusic
 (async () => {
     try {
-        await ytmusic.initialize();
+        await ytmusic.initialize({
+            headers: {
+                Cookie: "VISITOR_INFO1_LIVE=OgRU3YHghK8; YSC=gb2dKlvocOs; PREF=tz=Asia.Calcutta",
+                "User-Agent":
+                    "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36",
+                Referer: "https://www.youtube.com/",
+                "Accept-Language": "en-US,en;q=0.9",
+                Connection: "keep-alive"
+            }
+        });
 
-        console.log("YTMusic API initialized successfully!");
+        console.log("YTMusic API initialized successfully with cookies!");
     } catch (error) {
         console.error("YTMusic API initialization failed:", error);
     }
 })();
 
-// 1. Search for Music (Songs, Albums, Playlists, Artists
+// 1. Search for Music
 router.get("/ytmusic/search/", async (req, res) => {
     try {
         const query = req.query.query;
-        
-        if (!query) {
-            return res
-                .status(400)
-                .json({ error: "Query parameter is required" });
-        }
+        if (!query) return res.status(400).json({ error: "Query parameter is required" });
 
-        // Ensure initialization
+        const results = await ytmusic.search(query, "all");
+        if (!results || results.length === 0) return res.status(404).json({ error: "No results found" });
 
-        // Use null or 'all' for mixed results and include the limit
-        const results = await ytmusic.search(query, 'all');
-        
-        if (!results || results.length === 0) {
-            return res.status(404).json({ error: "No results found" });
-        }
-        
         res.json(results);
     } catch (error) {
         console.error("Error in search:", error.message);
@@ -45,30 +59,22 @@ router.get("/ytmusic/search/", async (req, res) => {
     }
 });
 
+// 2. Advanced Search
 router.get("/ytmusic/advsearch/", async (req, res) => {
     try {
         const query = req.query.query;
-        const limit = parseInt(req.query.limit) || 50; // Ensure limit is a number
+        const limit = parseInt(req.query.limit) || 50;
+        if (!query) return res.status(400).json({ error: "Query parameter is required" });
 
-        if (!query) {
-            return res.status(400).json({ error: "Query parameter is required" });
-        }
-
-        // Perform separate searches to get maximum results
         const [trackResults, albumResults, playlistResults, artistResults] = await Promise.all([
             ytmusic.search(query, "songs", limit),
             ytmusic.search(query, "albums", limit),
             ytmusic.search(query, "playlists", limit),
-            ytmusic.search(query, "artists", limit),
+            ytmusic.search(query, "artists", limit)
         ]);
 
-        // Combine all results into a single array
         let allResults = [...trackResults, ...albumResults, ...playlistResults, ...artistResults];
-
-        // Remove duplicates based on `videoId`, `playlistId`, or `browseId`
-        const uniqueResults = Array.from(new Map(
-            allResults.map(item => [item.videoId || item.playlistId || item.artistId, item])
-        ).values()).slice(0, limit); // Ensure the final results respect the limit
+        const uniqueResults = Array.from(new Map(allResults.map(item => [item.videoId || item.playlistId || item.artistId, item])).values()).slice(0, limit);
 
         res.json(uniqueResults);
     } catch (error) {
@@ -77,35 +83,22 @@ router.get("/ytmusic/advsearch/", async (req, res) => {
     }
 });
 
-
-
-// 🎶 2. Get Song Details
+// 3. Get Song Details
 router.get("/ytmusic/track/:id", async (req, res) => {
     try {
-        const songId = req.params.id;
-        const songDetails = await ytmusic.getSong(songId);
+        const songDetails = await ytmusic.getSong(req.params.id);
         res.json(songDetails);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
+// 4. Playlist Details
 router.get("/ytmusic/playlist/:id", async (req, res) => {
     try {
-        const playlistId = req.params.id;
-        if (!playlistId) {
-            return res.status(400).json({ error: "Playlist ID is required" });
-        }
-        const playlist = await play.playlist_info(
-            `https://music.youtube.com/playlist?list=${playlistId}`,
-            { incomplete: true }
-        );
+        const playlist = await play.playlist_info(`https://music.youtube.com/playlist?list=${req.params.id}`, { incomplete: true });
+        if (!playlist || !playlist.title) return res.status(404).json({ error: "Playlist not found or unavailable" });
 
-        if (!playlist || !playlist.title) {
-            return res
-                .status(404)
-                .json({ error: "Playlist not found or unavailable" });
-        }
         res.json(playlist);
     } catch (error) {
         console.error("Error fetching playlist:", error.message);
@@ -113,36 +106,30 @@ router.get("/ytmusic/playlist/:id", async (req, res) => {
     }
 });
 
-//3. Get Artist Details
-// * workinh
+// 5. Artist Details
 router.get("/ytmusic/artist/:id", async (req, res) => {
     try {
-        const artistId = req.params.id;
-        const artistDetails = await ytmusic.getArtist(artistId);
+        const artistDetails = await ytmusic.getArtist(req.params.id);
         res.json(artistDetails);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-// 📀 6. Get Album Details
+// 6. Album Details
 router.get("/ytmusic/album/:id", async (req, res) => {
     try {
-        const albumId = req.params.id;
-        const albumDetails = await ytmusic.getAlbum(albumId);
+        const albumDetails = await ytmusic.getAlbum(req.params.id);
         res.json(albumDetails);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-router.get("/ytmusic/stream/:id", async (req, res) => {
+// 7. Stream Song
+router.get("/ytmusic/stream/:id", youtubeHeadersMiddleware, async (req, res) => {
     try {
-        const songId = req.params.id;
-        if (!songId)
-            return res.status(400).json({ error: "Song ID is required" });
-
-        const url = `https://www.youtube.com/watch?v=${songId}`;
+        const url = `https://www.youtube.com/watch?v=${req.params.id}`;
         res.set({
             "Content-Type": "audio/mpeg",
             "Cache-Control": "no-cache",
@@ -151,101 +138,36 @@ router.get("/ytmusic/stream/:id", async (req, res) => {
             "Transfer-Encoding": "chunked"
         });
 
-        // Stream the audio with minimal data preloading
         ytdl(url, {
             filter: "audioonly",
             quality: "highestaudio",
             highWaterMark: 24 * 1024,
-            dlChunkSize: 32 * 1024
+            dlChunkSize: 32 * 1024,
+            ...req.ytdlOptions
         }).pipe(res);
     } catch (error) {
-        console.error(" Stream error:", error.message);
+        console.error("Stream error:", error.message);
         res.status(500).json({ error: error.message });
     }
 });
 
-
-router.get("/ytmusic/new", async (req, res) => {
-    try {
-        const releases = await ytmusic.search("latest songs", "all");
-        res.json(releases);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+// 8. Category-based APIs
+const categories = ["new", "trending", "topcharts", "topartists", "topmixes", "genres", "moods", "languages"];
+categories.forEach(category => {
+    router.get(`/ytmusic/${category}`, async (req, res) => {
+        try {
+            const results = await ytmusic.search(`${category} songs`, "all");
+            res.json(results);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    });
 });
 
-router.get("/ytmusic/trending", async (req, res) => {
-    try {
-        const trending = await ytmusic.search("trending songs", "all");
-        res.json(trending);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-router.get("/ytmusic/topcharts", async (req, res) => {
-    try {
-        const topCharts = await ytmusic.search("top charts latest", "all");
-        res.json(topCharts);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-router.get("/ytmusic/topartists", async (req, res) => {
-    try {
-        const topArtists = await ytmusic.search(" artists | singers", "artist");
-        res.json(topArtists);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-
-router.get("/ytmusic/topmixes", async (req, res) => {
-    try {
-        const topMixes = await ytmusic.search("top mixes/remixes latest", "all");
-        res.json(topMixes);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-router.get("/ytmusic/genres", async (req, res) => {
-    try {
-        const genres = await ytmusic.search("all genres latest", "all");
-        res.json(genres);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-
-
-
-router.get("/ytmusic/moods", async (req, res) => {
-    try {
-        const moods = await ytmusic.search("all moods latest", "all");
-        res.json(moods);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-
-router.get("/ytmusic/languages", async (req, res) => {
-    try {
-        const languages = await ytmusic.search("latest all languages", "all");
-        res.json(languages);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
+// 9. Dynamic Genre, Mood, and Language Search
 router.get("/ytmusic/genres/:genre", async (req, res) => {
-    const genre = req.params.genre
     try {
-        const resp = await ytmusic.search(`${type} genre latest`, "all");
+        const resp = await ytmusic.search(`${req.params.genre} genre latest`, "all");
         res.json(resp);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -253,9 +175,8 @@ router.get("/ytmusic/genres/:genre", async (req, res) => {
 });
 
 router.get("/ytmusic/moods/:mood", async (req, res) => {
-    const mood = req.params.mood
     try {
-        const resp = await ytmusic.search(`${type} mood latest`, "all");
+        const resp = await ytmusic.search(`${req.params.mood} mood latest`, "all");
         res.json(resp);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -263,14 +184,12 @@ router.get("/ytmusic/moods/:mood", async (req, res) => {
 });
 
 router.get("/ytmusic/languages/:lang", async (req, res) => {
-    const lang = req.params.lang
     try {
-        const resp= await ytmusic.search(`${lang} latest`, "all");
+        const resp = await ytmusic.search(`${req.params.lang} latest`, "all");
         res.json(resp);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
-
 
 module.exports = router;

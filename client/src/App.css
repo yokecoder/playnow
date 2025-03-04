@@ -262,6 +262,11 @@ p {
 
 .link {
     text-decoration: none;
+    cursor: pointer;
+}
+.link:hover,
+.link:active {
+    user-select: none;
 }
 
 .player-act-button {
@@ -672,4 +677,11 @@ p {
     border-radius: 50%;
     box-shadow: var(--topnav-box-shadow), var(--btmnav-box-shadow);
     cursor: pointer;
+}
+.music-explore-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 65vh;
+    padding-bottom: 100px;
+    overflow: auto;
 }

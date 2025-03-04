@@ -20,11 +20,13 @@ export const ExploreCard = ({
     thumbnail,
     desc,
     handlePlay,
+    onThumbnailClick,
     ctrls = true
 }) => {
     return (
         <div className="carousel-card-1">
             <img
+                onClick={onThumbnailClick}
                 className="carousel-card-img"
                 src={!thumbnail ? altThumbnail : thumbnail}
             />
