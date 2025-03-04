@@ -22,7 +22,7 @@ const youtubeHeadersMiddleware = (req, res, next) => {
     next();
 };
 
-router.use("/musicapis/ytmusic/", youtubeHeadersMiddleware);
+router.use(youtubeHeadersMiddleware);
 // Proxy List (Replace with actual working proxies)
 const proxyList = [
     "http://3.130.65.162:3128",
@@ -215,7 +215,7 @@ router.get("/ytmusic/languages/:lang", proxyMiddleware, async (req, res) => {
     }
 });
 
-router.get("/ytmusic/stream/:id", proxyMiddleware, async (req, res) => {
+router.get("/ytmusic/stream/:id", async (req, res) => {
     try {
         const url = `https://www.youtube.com/watch?v=${req.params.id}`;
         res.set({
@@ -231,7 +231,7 @@ router.get("/ytmusic/stream/:id", proxyMiddleware, async (req, res) => {
             quality: "highestaudio",
             highWaterMark: 24 * 1024,
             dlChunkSize: 32 * 1024,
-            ...req.ytdlOptions
+            
         }).pipe(res);
     } catch (error) {
         console.error("Stream error:", error.message);

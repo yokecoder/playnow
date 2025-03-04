@@ -178,7 +178,11 @@ export const MusicSearch = ({ hint, search, onChange, isOpen, onClose }) => {
                                                     </IconButton>
                                                     <div className="music-info-ttl">
                                                         <span>
-                                                            {data?.name}
+                                                            {data?.name
+                                                                ?.trim()
+                                                                .split(/\s+/)
+                                                                .slice(0, 6)
+                                                                .join(" ")}
                                                         </span>
                                                         <span>
                                                             {data?.artist?.name}

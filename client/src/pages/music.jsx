@@ -21,16 +21,7 @@ export default function Music() {
     };
     // Api endpoints for explore data
 
-    const endpoints = [
-        "/new",
-        "/trending",
-        "/topcharts",
-        "/topmixes",
-        "/topartists",
-        "/moods",
-        "/genres",
-        "/languages"
-    ];
+    const endpoints = ["/new", "/trending", "/topmixes", "/topartists"];
 
     // Helper function to fetch API data
     const fetchData = async endpoint => {
@@ -48,7 +39,9 @@ export default function Music() {
     const queries = useQueries({
         queries: endpoints.map(endpt => ({
             queryKey: [endpt], // Use meaningful queryKey
-            queryFn: () => fetchData(endpt)
+            queryFn: () => fetchData(endpt),
+            staleTime: 60 * 60 * 1000, // 60 minutes
+            cacheTime: 60 * 60 * 1000 // 60 minutes
         }))
     });
 
@@ -58,7 +51,7 @@ export default function Music() {
         return acc;
     }, {});
 
-    useEffect(() => console.log(exploreData), []);
+    //useEffect(() => console.log(exploreData), []);
     return (
         <>
             <div className="music-explore-bar">
@@ -121,28 +114,7 @@ export default function Music() {
                                 )}
                             </ExploreSection>
                         )}
-                        {exploreData["/topcharts"].length > 0 && (
-                            <ExploreSection caption="Top Charts">
-                                {exploreData["/topcharts"].map(
-                                    (data, idx) =>
-                                        data.type !== "ARTIST" && (
-                                            <ExploreCard
-                                                key={idx}
-                                                title={data.name}
-                                                thumbnail={
-                                                    data.thumbnails?.[
-                                                        data.thumbnails.length -
-                                                            1
-                                                    ]?.url
-                                                }
-                                                desc={`${data.type?.toLowerCase()} • ${
-                                                    data.artist?.name
-                                                }`}
-                                            />
-                                        )
-                                )}
-                            </ExploreSection>
-                        )}
+
                         {exploreData["/topmixes"].length > 0 && (
                             <ExploreSection caption="Top Mixes">
                                 {exploreData["/topmixes"].map(
@@ -168,72 +140,6 @@ export default function Music() {
                         {exploreData["/topartists"].length > 0 && (
                             <ExploreSection caption="From Favourite Artists">
                                 {exploreData["/topartists"].map(
-                                    (data, idx) =>
-                                        data.type !== "ARTIST" && (
-                                            <ExploreCard
-                                                key={idx}
-                                                title={data.name}
-                                                thumbnail={
-                                                    data.thumbnails?.[
-                                                        data.thumbnails.length -
-                                                            1
-                                                    ]?.url
-                                                }
-                                                desc={`${data.type?.toLowerCase()} • ${
-                                                    data.artist?.name
-                                                }`}
-                                            />
-                                        )
-                                )}
-                            </ExploreSection>
-                        )}
-                        {exploreData["/genres"].length > 0 && (
-                            <ExploreSection caption="Listen To Your Genre">
-                                {exploreData["/genres"].map(
-                                    (data, idx) =>
-                                        data.type !== "ARTIST" && (
-                                            <ExploreCard
-                                                key={idx}
-                                                title={data.name}
-                                                thumbnail={
-                                                    data.thumbnails?.[
-                                                        data.thumbnails.length -
-                                                            1
-                                                    ]?.url
-                                                }
-                                                desc={`${data.type?.toLowerCase()} • ${
-                                                    data.artist?.name
-                                                }`}
-                                            />
-                                        )
-                                )}
-                            </ExploreSection>
-                        )}
-                        {exploreData["/moods"].length > 0 && (
-                            <ExploreSection caption="Listen To Your Mood">
-                                {exploreData["/moods"].map(
-                                    (data, idx) =>
-                                        data.type !== "ARTIST" && (
-                                            <ExploreCard
-                                                key={idx}
-                                                title={data.name}
-                                                thumbnail={
-                                                    data.thumbnails?.[
-                                                        data.thumbnails.length -
-                                                            1
-                                                    ]?.url
-                                                }
-                                                desc={`${data.type?.toLowerCase()} • ${
-                                                    data.artist?.name
-                                                }`}
-                                            />
-                                        )
-                                )}
-                            </ExploreSection>
-                        )}
-                        {exploreData["/languages"].length > 0 && (
-                            <ExploreSection caption="Listen To Your Language">
-                                {exploreData["/languages"].map(
                                     (data, idx) =>
                                         data.type !== "ARTIST" && (
                                             <ExploreCard

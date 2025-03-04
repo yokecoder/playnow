@@ -362,10 +362,10 @@ p {
 /* Popup audio player styles */
 .audio-player-mini {
     display: flex;
-    justify-content: space-around;
+    justify-content: space-between;
     align-items: center;
     position: fixed;
-    bottom: 70px;
+    bottom: 60px;
     left: 50%;
     transform: translateX(-50%);
     width: 90vw;
@@ -499,7 +499,7 @@ p {
     font-size: 22px;
 }
 .playlist-container .music-list {
-    flex: 1  0 auto;
+    flex: 1 0 auto;
     display: flex;
     align-items: center;
     flex-direction: column;

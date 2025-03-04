@@ -32,7 +32,7 @@ export const ExploreCard = ({
             />
             <div className="card-info">
                 <span className="card-title">
-                    {title?.trim().split(/\s+/).slice(0, 3).join(" ")}
+                    {title?.trim().split(/\s+/).slice(0, 5).join(" ")}
                 </span>
                 <span className="card-type">{desc}</span>
             </div>
