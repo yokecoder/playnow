@@ -32,7 +32,21 @@ const proxyMiddleware = (req, res, next) => {
 const ytmusic = new YTMusic();
 (async () => {
     try {
-        await ytmusic.initialize();
+        
+
+await ytmusic.initialize({
+    headers: {
+        "User-Agent":
+            "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36",
+        Referer: "https://www.youtube.com/",
+        Cookie:
+            "VISITOR_INFO1_LIVE=OgRU3YHghK8; YSC=gb2dKlvocOs; PREF=tz=Asia.Calcutta",
+        "Accept-Language": "en-US,en;q=0.9",
+        Connection: "keep-alive",
+    },
+});
+
+
         console.log("YTMusic API initialized successfully with cookies!");
     } catch (error) {
         console.error("YTMusic API initialization failed:", error);
