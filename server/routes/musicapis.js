@@ -6,7 +6,23 @@ const play = require("play-dl");
 const { HttpsProxyAgent } = require("https-proxy-agent");
 
 const router = express.Router();
+const youtubeHeadersMiddleware = (req, res, next) => {
+    req.ytdlOptions = {
+        requestOptions: {
+            headers: {
+                "User Agent":
+                    "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36",
+                Referer: "https://www.youtube.com/",
+                Cookie: "VISITOR_INFO1_LIVE=OgRU3YHghK8; YSC=gb2dKlvocOs; PREF=tz=Asia.Calcutta",
+                "Accept-Language": "en-US,en;q=0.9",
+                Connection: "keep-alive"
+            }
+        }
+    };
+    next();
+};
 
+router.use("/musicapis/ytmusic/", youtubeHeadersMiddleware);
 // Proxy List (Replace with actual working proxies)
 const proxyList = [
     "http://3.130.65.162:3128",
@@ -22,7 +38,6 @@ const getRandomProxy = () =>
 // Proxy Middleware
 const proxyMiddleware = (req, res, next) => {
     const proxyUrl = getRandomProxy();
-    console.log("Using proxy:", proxyUrl);
 
     req.proxyAgent = new HttpsProxyAgent(proxyUrl);
     req.headers["User-Agent"] =
@@ -126,28 +141,6 @@ router.get("/ytmusic/album/:id", proxyMiddleware, async (req, res) => {
 });
 
 // Stream Song
-router.get("/ytmusic/stream/:id", proxyMiddleware, async (req, res) => {
-    try {
-        const url = `https://www.youtube.com/watch?v=${req.params.id}`;
-        res.set({
-            "Content-Type": "audio/mpeg",
-            "Cache-Control": "no-cache",
-            Connection: "keep-alive",
-            "Accept-Ranges": "bytes",
-            "Transfer-Encoding": "chunked"
-        });
-
-        ytdl(url, {
-            filter: "audioonly",
-            quality: "highestaudio",
-            highWaterMark: 24 * 1024,
-            dlChunkSize: 32 * 1024
-        }).pipe(res);
-    } catch (error) {
-        console.error("Stream error:", error.message);
-        res.status(500).json({ error: error.message });
-    }
-});
 
 // Category-based APIs
 const categories = [
@@ -218,6 +211,30 @@ router.get("/ytmusic/languages/:lang", proxyMiddleware, async (req, res) => {
         });
         res.json(resp);
     } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get("/ytmusic/stream/:id", proxyMiddleware, async (req, res) => {
+    try {
+        const url = `https://www.youtube.com/watch?v=${req.params.id}`;
+        res.set({
+            "Content-Type": "audio/mpeg",
+            "Cache-Control": "no-cache",
+            Connection: "keep-alive",
+            "Accept-Ranges": "bytes",
+            "Transfer-Encoding": "chunked"
+        });
+
+        ytdl(url, {
+            filter: "audioonly",
+            quality: "highestaudio",
+            highWaterMark: 24 * 1024,
+            dlChunkSize: 32 * 1024,
+            ...req.ytdlOptions
+        }).pipe(res);
+    } catch (error) {
+        console.error("Stream error:", error.message);
         res.status(500).json({ error: error.message });
     }
 });
