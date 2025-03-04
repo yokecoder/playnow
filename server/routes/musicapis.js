@@ -6,7 +6,7 @@ const play = require("play-dl");
 
 const router = express.Router();
 
-const youtubeHeadersMiddleware = (req, res, next) => {
+/*const youtubeHeadersMiddleware = (req, res, next) => {
     req.ytdlOptions = {
         requestOptions: {
             headers: {
@@ -22,7 +22,7 @@ const youtubeHeadersMiddleware = (req, res, next) => {
     next();
 };
 
-router.use(youtubeHeadersMiddleware);
+router.use(youtubeHeadersMiddleware);*/
 
 // Initialize YTMusic with cookies
 const ytmusic = new YTMusic();
@@ -170,7 +170,7 @@ router.get("/ytmusic/stream/:id", async (req, res) => {
             quality: "highestaudio",
             highWaterMark: 24 * 1024,
             dlChunkSize: 32 * 1024,
-            ...req.ytdlOptions
+        
         }).pipe(res);
     } catch (error) {
         console.error("Stream error:", error.message);
