@@ -22,7 +22,7 @@ const youtubeHeadersMiddleware = (req, res, next) => {
     next();
 };
 
-router.use("/musicapis", youtubeHeadersMiddleware);
+router.use(youtubeHeadersMiddleware);
 
 // Initialize YTMusic with cookies
 const ytmusic = new YTMusic();
@@ -30,7 +30,12 @@ const ytmusic = new YTMusic();
     try {
         await ytmusic.initialize({
             headers: {
-                Cookie: "VISITOR_INFO1_LIVE=OgRU3YHghK8; YSC=gb2dKlvocOs; PREF=tz=Asia.Calcutta"
+                "User Agent":
+                    "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36",
+                Referer: "https://www.youtube.com/",
+                Cookie: "VISITOR_INFO1_LIVE=OgRU3YHghK8; YSC=gb2dKlvocOs; PREF=tz=Asia.Calcutta",
+                "Accept-Language": "en-US,en;q=0.9",
+                Connection: "keep-alive"
             }
         });
         console.log("YTMusic API initialized successfully with cookies!");
