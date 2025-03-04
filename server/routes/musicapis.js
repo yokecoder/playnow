@@ -219,7 +219,7 @@ const categories = [
 categories.forEach(category => {
     router.get(`/ytmusic/${category}`, proxyMiddleware, async (req, res) => {
         try {
-            const results = await ytmusic.search(`${category} latest`, "all", {
+            const results = await ytmusic.search(`${category} all latest`, "all", {
                 requestOptions: { agent: req.proxyAgent }
             });
             res.json(results);
