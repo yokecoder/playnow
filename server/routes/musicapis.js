@@ -11,10 +11,6 @@ const router = express.Router();
 // Proxy List (Replace with actual working proxies)
 const proxyList = [
     "http://3.130.65.162:3128",
-    "http://8.211.51.115:9050",
-    "http://47.90.149.238:1036",
-    "http://47.91.29.151:41",
-    "http://8.148.23.202:4000",
     "http://3.127.62.252:80"
 ];
 
@@ -201,6 +197,7 @@ router.get("/ytmusic/stream/:id", proxyMiddleware, async (req, res) => {
     }
 });
 // 8. Category-based APIs
+<<<<<<< HEAD
 router.get("/ytmusic/new", proxyMiddleware, async (req, res) => {
     try {
         const results = await ytmusic.search("latest songs", "all", {
@@ -287,6 +284,29 @@ router.get("/ytmusic/languages", proxyMiddleware, async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
+=======
+const categories = [
+    "new",
+    "trending",
+    "topcharts",
+    "topartists",
+    "topmixes",
+    "genres",
+    "moods",
+    "languages"
+];
+categories.forEach(category => {
+    router.get(`/ytmusic/${category}`, proxyMiddleware, async (req, res) => {
+        try {
+            const results = await ytmusic.search(`${category} latest`, "all", {
+                requestOptions: { agent: req.proxyAgent }
+            });
+            res.json(results);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    });
+>>>>>>> parent of 4c0db56 (finally fixed errors)
 });
 
 // 9. Dynamic Genre, Mood, and Language Search

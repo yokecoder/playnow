@@ -32,7 +32,12 @@ const YtPlayer = ({ url }) => {
                     theme="dark"
                 />
 
-                <ReactPlayer url={url} controls height="180px" width="320px" />
+                <ReactPlayer
+                    url={getEmbedUrl(url)}
+                    controls
+                    height="180px"
+                    width="320px"
+                />
                 <div className="player-actions">
                     <Select
                         className="player-format-select"

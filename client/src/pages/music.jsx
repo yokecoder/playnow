@@ -93,7 +93,15 @@ export default function Music() {
                                                 desc={`${data.type?.toLowerCase()} • ${
                                                     data.artist?.name
                                                 }`}
-                                                
+                                                handlePlay={() => {
+                                                    if (
+                                                        data.type === "VIDEO" ||
+                                                        data.type === "SONG"
+                                                    ) {
+                                                        
+                                                        console.log(data)
+                                                    }
+                                                }}
                                             />
                                         )
                                 )}
