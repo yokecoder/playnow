@@ -11,8 +11,6 @@ import axios from "axios";
 export default function Music() {
     const [search, setSearch] = useState("");
     const [isSearchOpen, setSearchOpen] = useState(false);
-<<<<<<< HEAD
-<<<<<<< HEAD
     const [isPlaylistOpen, setPlaylistOpen] = useState(false);
     const [playlistId, setPlaylistId] = useState(null);
     const { currentTrack, addToQueue } = useTrackQueue();
@@ -95,15 +93,6 @@ export default function Music() {
                                                 desc={`${data.type?.toLowerCase()} • ${
                                                     data.artist?.name
                                                 }`}
-                                                handlePlay={() => {
-                                                    if (
-                                                        data.type === "VIDEO" ||
-                                                        data.type === "SONG"
-                                                    ) {
-                                                        
-                                                        console.log(data)
-                                                    }
-                                                }}
                                             />
                                         )
                                 )}
@@ -267,33 +256,9 @@ export default function Music() {
                     </>
                 )}
             </div>
-=======
-    const { currentTrack, trackQueue, prevTrackQueue, setCurrentTrack } =
-        useTrackQueue();
-
-    return (
-        <>
-=======
-    const { currentTrack, trackQueue, prevTrackQueue, setCurrentTrack } =
-        useTrackQueue();
-
-    return (
-        <>
->>>>>>> parent of 7bdce1e (created explore apis)
-            <SearchBar
-                hint="Search for songs,playlist,albums, etc.. "
-                value={search}
-                onChange={setSearch}
-                onCancel={() => setSearch("")}
-                onFocus={() => setSearchOpen(true)}
-            />
-<<<<<<< HEAD
->>>>>>> parent of 7bdce1e (created explore apis)
-=======
->>>>>>> parent of 7bdce1e (created explore apis)
 
             <MusicSearch
-                hint="Search for songs,playlist,albums"
+                hint="Search for songs,playlist,albums,etc..."
                 search={search}
                 onChange={setSearch}
                 isOpen={isSearchOpen}
@@ -303,6 +268,12 @@ export default function Music() {
                 }}
             />
 
+            {isPlaylistOpen && (
+                <Playlist
+                    playlistId={playlistId}
+                    onClose={() => setPlaylistOpen(false)}
+                />
+            )}
             {currentTrack && <AudioPlayer trackId={currentTrack} />}
         </>
     );

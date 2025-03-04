@@ -11,9 +11,9 @@ const router = express.Router();
 // Proxy List (Replace with actual working proxies)
 const proxyList = [
     "http://3.130.65.162:3128",
-    "http://3.127.62.252:80",
+    "http://118.113.244.222:2324",
     "http://8.211.51.115:9050",
-    "http://8.148.23.202:4000/"
+    "http://47.90.149.238:1036"
 ];
 
 // Function to get a random proxy
@@ -49,17 +49,8 @@ const ytmusic = new YTMusic();
     }
 })();
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 // 1. Search for Music
 router.get("/ytmusic/search/", proxyMiddleware, async (req, res) => {
-=======
-=======
->>>>>>> parent of 7bdce1e (created explore apis)
-// 1. Search for Music (Songs, Albums, Playlists, Artists)
-// * Working
-router.get("/ytmusic/search/", async (req, res) => {
->>>>>>> parent of 7bdce1e (created explore apis)
     try {
         const query = req.query.query;
         if (!query)
@@ -203,14 +194,11 @@ router.get("/ytmusic/stream/:id", proxyMiddleware, async (req, res) => {
             dlChunkSize: 32 * 1024
         }).pipe(res);
     } catch (error) {
-<<<<<<< HEAD
-<<<<<<< HEAD
         console.error("Stream error:", error.message);
         res.status(500).json({ error: error.message });
     }
 });
 // 8. Category-based APIs
-    
 const categories = [
     "new",
     "trending",
@@ -224,9 +212,13 @@ const categories = [
 categories.forEach(category => {
     router.get(`/ytmusic/${category}`, proxyMiddleware, async (req, res) => {
         try {
-            const results = await ytmusic.search(`${category} latest`, "all", {
-                requestOptions: { agent: req.proxyAgent }
-            });
+            const results = await ytmusic.search(
+                `${category} all latest`,
+                "all",
+                {
+                    requestOptions: { agent: req.proxyAgent }
+                }
+            );
             res.json(results);
         } catch (error) {
             res.status(500).json({ error: error.message });
@@ -244,14 +236,10 @@ router.get("/ytmusic/genres/:genre", proxyMiddleware, async (req, res) => {
         );
         res.json(resp);
     } catch (error) {
-=======
-        console.error("❌ Stream error:", error.message);
->>>>>>> parent of 7bdce1e (created explore apis)
         res.status(500).json({ error: error.message });
     }
 });
 
-<<<<<<< HEAD
 router.get("/ytmusic/moods/:mood", proxyMiddleware, async (req, res) => {
     try {
         const resp = await ytmusic.search(
@@ -276,25 +264,4 @@ router.get("/ytmusic/languages/:lang", proxyMiddleware, async (req, res) => {
     }
 });
 
-=======
-        console.error("❌ Stream error:", error.message);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-=======
->>>>>>> parent of 7bdce1e (created explore apis)
-router.get("/ytmusic/new", async (req, res) => {
-    try {
-        const releases = await ytmusic.search("new-releases", "songs");
-        res.json(releases);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-<<<<<<< HEAD
->>>>>>> parent of 7bdce1e (created explore apis)
-=======
->>>>>>> parent of 7bdce1e (created explore apis)
 module.exports = router;
