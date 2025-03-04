@@ -11,9 +11,11 @@ const router = express.Router();
 // Proxy List (Replace with actual working proxies)
 const proxyList = [
     "http://3.130.65.162:3128",
-    "http://118.113.244.222:2324",
     "http://8.211.51.115:9050",
-    "http://47.90.149.238:1036"
+    "http://47.90.149.238:1036",
+    "http://47.91.29.151:41",
+    "http://8.148.23.202:4000",
+    "http://3.127.62.252:80"
 ];
 
 // Function to get a random proxy
@@ -24,7 +26,7 @@ const getRandomProxy = () => {
 // Proxy Middleware
 const proxyMiddleware = (req, res, next) => {
     const proxyUrl = getRandomProxy();
-    req.proxyAgent =new HttpsProxyAgent(proxyUrl);
+    req.proxyAgent = new HttpsProxyAgent(proxyUrl);
     next();
 };
 
@@ -32,20 +34,16 @@ const proxyMiddleware = (req, res, next) => {
 const ytmusic = new YTMusic();
 (async () => {
     try {
-        
-
-await ytmusic.initialize({
-    headers: {
-        "User-Agent":
-            "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36",
-        Referer: "https://www.youtube.com/",
-        Cookie:
-            "VISITOR_INFO1_LIVE=OgRU3YHghK8; YSC=gb2dKlvocOs; PREF=tz=Asia.Calcutta",
-        "Accept-Language": "en-US,en;q=0.9",
-        Connection: "keep-alive",
-    },
-});
-
+        await ytmusic.initialize({
+            headers: {
+                "User-Agent":
+                    "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36",
+                Referer: "https://www.youtube.com/",
+                Cookie: "VISITOR_INFO1_LIVE=OgRU3YHghK8; YSC=gb2dKlvocOs; PREF=tz=Asia.Calcutta",
+                "Accept-Language": "en-US,en;q=0.9",
+                Connection: "keep-alive"
+            }
+        });
 
         console.log("YTMusic API initialized successfully with cookies!");
     } catch (error) {
@@ -180,8 +178,6 @@ router.get("/ytmusic/album/:id", proxyMiddleware, async (req, res) => {
 
 // 7. Stream Song
 
-
-
 router.get("/ytmusic/stream/:id", proxyMiddleware, async (req, res) => {
     try {
         const url = `https://www.youtube.com/watch?v=${req.params.id}`;
@@ -197,8 +193,7 @@ router.get("/ytmusic/stream/:id", proxyMiddleware, async (req, res) => {
             filter: "audioonly",
             quality: "highestaudio",
             highWaterMark: 24 * 1024,
-            dlChunkSize: 32 * 1024,
-           
+            dlChunkSize: 32 * 1024
         }).pipe(res);
     } catch (error) {
         console.error("Stream error:", error.message);
@@ -206,27 +201,92 @@ router.get("/ytmusic/stream/:id", proxyMiddleware, async (req, res) => {
     }
 });
 // 8. Category-based APIs
-const categories = [
-    "new",
-    "trending",
-    "topcharts",
-    "topartists",
-    "topmixes",
-    "genres",
-    "moods",
-    "languages"
-];
-categories.forEach(category => {
-    router.get(`/ytmusic/${category}`, proxyMiddleware, async (req, res) => {
-        try {
-            const results = await ytmusic.search(`${category} all latest`, "all", {
-                requestOptions: { agent: req.proxyAgent }
-            });
-            res.json(results);
-        } catch (error) {
-            res.status(500).json({ error: error.message });
-        }
-    });
+router.get("/ytmusic/new", proxyMiddleware, async (req, res) => {
+    try {
+        const results = await ytmusic.search("latest songs", "all", {
+            requestOptions: { agent: req.proxyAgent }
+        });
+        res.json(results);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get("/ytmusic/trending", proxyMiddleware, async (req, res) => {
+    try {
+        const results = await ytmusic.search("trending songs", "all", {
+            requestOptions: { agent: req.proxyAgent }
+        });
+        res.json(results);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get("/ytmusic/topcharts", proxyMiddleware, async (req, res) => {
+    try {
+        const results = await ytmusic.search("top charts music", "all", {
+            requestOptions: { agent: req.proxyAgent }
+        });
+        res.json(results);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get("/ytmusic/topartists", proxyMiddleware, async (req, res) => {
+    try {
+        const results = await ytmusic.search("top artists", "artists", {
+            requestOptions: { agent: req.proxyAgent }
+        });
+        res.json(results);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get("/ytmusic/topmixes", proxyMiddleware, async (req, res) => {
+    try {
+        const results = await ytmusic.search("top mixes", "playlists", {
+            requestOptions: { agent: req.proxyAgent }
+        });
+        res.json(results);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get("/ytmusic/genres", proxyMiddleware, async (req, res) => {
+    try {
+        const results = await ytmusic.search("all genres latest", "all", {
+            requestOptions: { agent: req.proxyAgent }
+        });
+        res.json(results);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get("/ytmusic/moods", proxyMiddleware, async (req, res) => {
+    try {
+        const results = await ytmusic.search("mood based music latest", "all", {
+            requestOptions: { agent: req.proxyAgent }
+        });
+        res.json(results);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get("/ytmusic/languages", proxyMiddleware, async (req, res) => {
+    try {
+        const results = await ytmusic.search("all languages latest", "all", {
+            requestOptions: { agent: req.proxyAgent }
+        });
+        res.json(results);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
 // 9. Dynamic Genre, Mood, and Language Search
