@@ -3,41 +3,36 @@ const axios = require("axios");
 const ytdl = require("@distube/ytdl-core");
 const YTMusic = require("ytmusic-api");
 const play = require("play-dl");
+const { HttpsProxyAgent } = require("https-proxy-agent");
+const { Agent, fetch } = require("undici");
 
 const router = express.Router();
 
-/*const youtubeHeadersMiddleware = (req, res, next) => {
-    req.ytdlOptions = {
-        requestOptions: {
-            headers: {
-                "User Agent":
-                    "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36",
-                Referer: "https://www.youtube.com/",
-                Cookie: "VISITOR_INFO1_LIVE=OgRU3YHghK8; YSC=gb2dKlvocOs; PREF=tz=Asia.Calcutta",
-                "Accept-Language": "en-US,en;q=0.9",
-                Connection: "keep-alive"
-            }
-        }
-    };
-    next();
+// Proxy List (Replace with actual working proxies)
+const proxyList = [
+    "http://3.130.65.162:3128",
+    "http://118.113.244.222:2324",
+    "http://8.211.51.115:9050",
+    "http://47.90.149.238:1036"
+];
+
+// Function to get a random proxy
+const getRandomProxy = () => {
+    return proxyList[Math.floor(Math.random() * proxyList.length)];
 };
 
-router.use(youtubeHeadersMiddleware);*/
+// Proxy Middleware
+const proxyMiddleware = (req, res, next) => {
+    const proxyUrl = getRandomProxy();
+    req.proxyAgent =new HttpsProxyAgent(proxyUrl);
+    next();
+};
 
 // Initialize YTMusic with cookies
 const ytmusic = new YTMusic();
 (async () => {
     try {
-        await ytmusic.initialize({
-            headers: {
-                "User Agent":
-                    "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36",
-                Referer: "https://www.youtube.com/",
-                Cookie: "VISITOR_INFO1_LIVE=OgRU3YHghK8; YSC=gb2dKlvocOs; PREF=tz=Asia.Calcutta",
-                "Accept-Language": "en-US,en;q=0.9",
-                Connection: "keep-alive"
-            }
-        });
+        await ytmusic.initialize();
         console.log("YTMusic API initialized successfully with cookies!");
     } catch (error) {
         console.error("YTMusic API initialization failed:", error);
@@ -45,7 +40,7 @@ const ytmusic = new YTMusic();
 })();
 
 // 1. Search for Music
-router.get("/ytmusic/search/", async (req, res) => {
+router.get("/ytmusic/search/", proxyMiddleware, async (req, res) => {
     try {
         const query = req.query.query;
         if (!query)
@@ -53,7 +48,9 @@ router.get("/ytmusic/search/", async (req, res) => {
                 .status(400)
                 .json({ error: "Query parameter is required" });
 
-        const results = await ytmusic.search(query, "all");
+        const results = await ytmusic.search(query, "all", {
+            requestOptions: { agent: req.proxyAgent }
+        });
         if (!results || results.length === 0)
             return res.status(404).json({ error: "No results found" });
 
@@ -65,7 +62,7 @@ router.get("/ytmusic/search/", async (req, res) => {
 });
 
 // 2. Advanced Search
-router.get("/ytmusic/advsearch/", async (req, res) => {
+router.get("/ytmusic/advsearch/", proxyMiddleware, async (req, res) => {
     try {
         const query = req.query.query;
         const limit = parseInt(req.query.limit) || 50;
@@ -76,10 +73,18 @@ router.get("/ytmusic/advsearch/", async (req, res) => {
 
         const [trackResults, albumResults, playlistResults, artistResults] =
             await Promise.all([
-                ytmusic.search(query, "songs", limit),
-                ytmusic.search(query, "albums", limit),
-                ytmusic.search(query, "playlists", limit),
-                ytmusic.search(query, "artists", limit)
+                ytmusic.search(query, "songs", limit, {
+                    requestOptions: { agent: req.proxyAgent }
+                }),
+                ytmusic.search(query, "albums", limit, {
+                    requestOptions: { agent: req.proxyAgent }
+                }),
+                ytmusic.search(query, "playlists", limit, {
+                    requestOptions: { agent: req.proxyAgent }
+                }),
+                ytmusic.search(query, "artists", limit, {
+                    requestOptions: { agent: req.proxyAgent }
+                })
             ]);
 
         let allResults = [
@@ -105,9 +110,11 @@ router.get("/ytmusic/advsearch/", async (req, res) => {
 });
 
 // 3. Get Song Details
-router.get("/ytmusic/track/:id", async (req, res) => {
+router.get("/ytmusic/track/:id", proxyMiddleware, async (req, res) => {
     try {
-        const songDetails = await ytmusic.getSong(req.params.id);
+        const songDetails = await ytmusic.getSong(req.params.id, {
+            requestOptions: { agent: req.proxyAgent }
+        });
         res.json(songDetails);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -115,11 +122,11 @@ router.get("/ytmusic/track/:id", async (req, res) => {
 });
 
 // 4. Playlist Details
-router.get("/ytmusic/playlist/:id", async (req, res) => {
+router.get("/ytmusic/playlist/:id", proxyMiddleware, async (req, res) => {
     try {
         const playlist = await play.playlist_info(
             `https://music.youtube.com/playlist?list=${req.params.id}`,
-            { incomplete: true }
+            { incomplete: true, requestOptions: { agent: req.proxyAgent } }
         );
         if (!playlist || !playlist.title)
             return res
@@ -134,9 +141,11 @@ router.get("/ytmusic/playlist/:id", async (req, res) => {
 });
 
 // 5. Artist Details
-router.get("/ytmusic/artist/:id", async (req, res) => {
+router.get("/ytmusic/artist/:id", proxyMiddleware, async (req, res) => {
     try {
-        const artistDetails = await ytmusic.getArtist(req.params.id);
+        const artistDetails = await ytmusic.getArtist(req.params.id, {
+            requestOptions: { agent: req.proxyAgent }
+        });
         res.json(artistDetails);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -144,9 +153,11 @@ router.get("/ytmusic/artist/:id", async (req, res) => {
 });
 
 // 6. Album Details
-router.get("/ytmusic/album/:id", async (req, res) => {
+router.get("/ytmusic/album/:id", proxyMiddleware, async (req, res) => {
     try {
-        const albumDetails = await ytmusic.getAlbum(req.params.id);
+        const albumDetails = await ytmusic.getAlbum(req.params.id, {
+            requestOptions: { agent: req.proxyAgent }
+        });
         res.json(albumDetails);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -154,7 +165,10 @@ router.get("/ytmusic/album/:id", async (req, res) => {
 });
 
 // 7. Stream Song
-router.get("/ytmusic/stream/:id", async (req, res) => {
+
+
+
+router.get("/ytmusic/stream/:id", proxyMiddleware, async (req, res) => {
     try {
         const url = `https://www.youtube.com/watch?v=${req.params.id}`;
         res.set({
@@ -170,14 +184,13 @@ router.get("/ytmusic/stream/:id", async (req, res) => {
             quality: "highestaudio",
             highWaterMark: 24 * 1024,
             dlChunkSize: 32 * 1024,
-        
+           
         }).pipe(res);
     } catch (error) {
         console.error("Stream error:", error.message);
         res.status(500).json({ error: error.message });
     }
 });
-
 // 8. Category-based APIs
 const categories = [
     "new",
@@ -190,9 +203,11 @@ const categories = [
     "languages"
 ];
 categories.forEach(category => {
-    router.get(`/ytmusic/${category}`, async (req, res) => {
+    router.get(`/ytmusic/${category}`, proxyMiddleware, async (req, res) => {
         try {
-            const results = await ytmusic.search(`${category} latest`, "all");
+            const results = await ytmusic.search(`${category} latest`, "all", {
+                requestOptions: { agent: req.proxyAgent }
+            });
             res.json(results);
         } catch (error) {
             res.status(500).json({ error: error.message });
@@ -201,11 +216,12 @@ categories.forEach(category => {
 });
 
 // 9. Dynamic Genre, Mood, and Language Search
-router.get("/ytmusic/genres/:genre", async (req, res) => {
+router.get("/ytmusic/genres/:genre", proxyMiddleware, async (req, res) => {
     try {
         const resp = await ytmusic.search(
             `${req.params.genre} genre latest`,
-            "all"
+            "all",
+            { requestOptions: { agent: req.proxyAgent } }
         );
         res.json(resp);
     } catch (error) {
@@ -213,11 +229,12 @@ router.get("/ytmusic/genres/:genre", async (req, res) => {
     }
 });
 
-router.get("/ytmusic/moods/:mood", async (req, res) => {
+router.get("/ytmusic/moods/:mood", proxyMiddleware, async (req, res) => {
     try {
         const resp = await ytmusic.search(
             `${req.params.mood} mood latest`,
-            "all"
+            "all",
+            { requestOptions: { agent: req.proxyAgent } }
         );
         res.json(resp);
     } catch (error) {
@@ -225,9 +242,11 @@ router.get("/ytmusic/moods/:mood", async (req, res) => {
     }
 });
 
-router.get("/ytmusic/languages/:lang", async (req, res) => {
+router.get("/ytmusic/languages/:lang", proxyMiddleware, async (req, res) => {
     try {
-        const resp = await ytmusic.search(`${req.params.lang} latest`, "all");
+        const resp = await ytmusic.search(`${req.params.lang} latest`, "all", {
+            requestOptions: { agent: req.proxyAgent }
+        });
         res.json(resp);
     } catch (error) {
         res.status(500).json({ error: error.message });
