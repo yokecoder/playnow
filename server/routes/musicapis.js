@@ -50,9 +50,12 @@ const ytmusic = new YTMusic();
 })();
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 // 1. Search for Music
 router.get("/ytmusic/search/", proxyMiddleware, async (req, res) => {
 =======
+=======
+>>>>>>> parent of 7bdce1e (created explore apis)
 // 1. Search for Music (Songs, Albums, Playlists, Artists)
 // * Working
 router.get("/ytmusic/search/", async (req, res) => {
@@ -201,6 +204,7 @@ router.get("/ytmusic/stream/:id", proxyMiddleware, async (req, res) => {
         }).pipe(res);
     } catch (error) {
 <<<<<<< HEAD
+<<<<<<< HEAD
         console.error("Stream error:", error.message);
         res.status(500).json({ error: error.message });
     }
@@ -240,10 +244,14 @@ router.get("/ytmusic/genres/:genre", proxyMiddleware, async (req, res) => {
         );
         res.json(resp);
     } catch (error) {
+=======
+        console.error("❌ Stream error:", error.message);
+>>>>>>> parent of 7bdce1e (created explore apis)
         res.status(500).json({ error: error.message });
     }
 });
 
+<<<<<<< HEAD
 router.get("/ytmusic/moods/:mood", proxyMiddleware, async (req, res) => {
     try {
         const resp = await ytmusic.search(
@@ -274,6 +282,8 @@ router.get("/ytmusic/languages/:lang", proxyMiddleware, async (req, res) => {
     }
 });
 
+=======
+>>>>>>> parent of 7bdce1e (created explore apis)
 router.get("/ytmusic/new", async (req, res) => {
     try {
         const releases = await ytmusic.search("new-releases", "songs");
@@ -283,5 +293,8 @@ router.get("/ytmusic/new", async (req, res) => {
     }
 });
 
+<<<<<<< HEAD
+>>>>>>> parent of 7bdce1e (created explore apis)
+=======
 >>>>>>> parent of 7bdce1e (created explore apis)
 module.exports = router;

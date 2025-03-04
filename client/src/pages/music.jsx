@@ -12,6 +12,7 @@ export default function Music() {
     const [search, setSearch] = useState("");
     const [isSearchOpen, setSearchOpen] = useState(false);
 <<<<<<< HEAD
+<<<<<<< HEAD
     const [isPlaylistOpen, setPlaylistOpen] = useState(false);
     const [playlistId, setPlaylistId] = useState(null);
     const { currentTrack, addToQueue } = useTrackQueue();
@@ -272,6 +273,13 @@ export default function Music() {
 
     return (
         <>
+=======
+    const { currentTrack, trackQueue, prevTrackQueue, setCurrentTrack } =
+        useTrackQueue();
+
+    return (
+        <>
+>>>>>>> parent of 7bdce1e (created explore apis)
             <SearchBar
                 hint="Search for songs,playlist,albums, etc.. "
                 value={search}
@@ -279,6 +287,9 @@ export default function Music() {
                 onCancel={() => setSearch("")}
                 onFocus={() => setSearchOpen(true)}
             />
+<<<<<<< HEAD
+>>>>>>> parent of 7bdce1e (created explore apis)
+=======
 >>>>>>> parent of 7bdce1e (created explore apis)
 
             <MusicSearch

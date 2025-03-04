@@ -13,6 +13,7 @@ const YtPlayer = ({ url }) => {
         url
     )}&fmt=${format}&res=${resolution}`;
 <<<<<<< HEAD
+<<<<<<< HEAD
 
     // Memoized function to avoid unnecessary re-renders
     const getEmbedUrl = useCallback(vurl => {
@@ -22,6 +23,8 @@ const YtPlayer = ({ url }) => {
             ? `https://www.youtube-nocookie.com/embed/${match[1]}`
             : "";
     }, []);
+=======
+>>>>>>> parent of 7bdce1e (created explore apis)
 =======
 >>>>>>> parent of 7bdce1e (created explore apis)
 
@@ -39,6 +42,7 @@ const YtPlayer = ({ url }) => {
             />
 
 <<<<<<< HEAD
+<<<<<<< HEAD
             <ReactPlayer url={url} controls height="180px" width="320px" />
 
             <div className="player-actions">
@@ -53,6 +57,8 @@ const YtPlayer = ({ url }) => {
 
                 {format === "video" && (
 =======
+=======
+>>>>>>> parent of 7bdce1e (created explore apis)
                 <ReactPlayer url={url} controls height="180px" width="320px" />
                 <div className="player-actions">
 >>>>>>> parent of 7bdce1e (created explore apis)
