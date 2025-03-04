@@ -6,37 +6,13 @@ const play = require("play-dl");
 
 const router = express.Router();
 
-const youtubeHeadersMiddleware = (req, res, next) => {
-    req.ytdlOptions = {
-        requestOptions: {
-            headers: {
-                "User-Agent":
-                    "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36",
-                Referer: "https://www.youtube.com/",
-                Cookie: "VISITOR_INFO1_LIVE=OgRU3YHghK8; YSC=gb2dKlvocOs; PREF=tz=Asia.Calcutta",
-                "Accept-Language": "en-US,en;q=0.9",
-                Connection: "keep-alive"
-            }
-        }
-    };
-    next();
-};
+
 
 // Initialize YTMusic with cookies
 const ytmusic = new YTMusic();
 (async () => {
     try {
-        await ytmusic.initialize({
-            headers: {
-                Cookie: "VISITOR_INFO1_LIVE=OgRU3YHghK8; YSC=gb2dKlvocOs; PREF=tz=Asia.Calcutta",
-                "User-Agent":
-                    "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36",
-                Referer: "https://www.youtube.com/",
-                "Accept-Language": "en-US,en;q=0.9",
-                Connection: "keep-alive"
-            }
-        });
-
+        await ytmusic.initialize();
         console.log("YTMusic API initialized successfully with cookies!");
     } catch (error) {
         console.error("YTMusic API initialization failed:", error);
@@ -127,7 +103,7 @@ router.get("/ytmusic/album/:id", async (req, res) => {
 });
 
 // 7. Stream Song
-router.get("/ytmusic/stream/:id", youtubeHeadersMiddleware, async (req, res) => {
+router.get("/ytmusic/stream/:id", async (req, res) => {
     try {
         const url = `https://www.youtube.com/watch?v=${req.params.id}`;
         res.set({
@@ -143,7 +119,7 @@ router.get("/ytmusic/stream/:id", youtubeHeadersMiddleware, async (req, res) => 
             quality: "highestaudio",
             highWaterMark: 24 * 1024,
             dlChunkSize: 32 * 1024,
-            ...req.ytdlOptions
+           
         }).pipe(res);
     } catch (error) {
         console.error("Stream error:", error.message);
@@ -156,7 +132,7 @@ const categories = ["new", "trending", "topcharts", "topartists", "topmixes", "g
 categories.forEach(category => {
     router.get(`/ytmusic/${category}`, async (req, res) => {
         try {
-            const results = await ytmusic.search(`${category} songs`, "all");
+            const results = await ytmusic.search(`${category} latest`, "all");
             res.json(results);
         } catch (error) {
             res.status(500).json({ error: error.message });
