@@ -26,7 +26,7 @@ export default function AudioPlayer({ trackId }) {
 
         try {
             const response = await axios.get(
-                `https://server-playnow-production.up.railway.app/musicapis/ytmusic/track/${trackId}`
+                `https://playnow.onrender.com/musicapis/ytmusic/track/${trackId}`
             );
 
             return response.data;
