@@ -56,6 +56,12 @@ const ytmusic = new YTMusic();
 })();
 
 // Search for Music
+router.get("/ytmusic/stream/:id", ytdlMiddleware, async (req, res) => {
+    const url = `https://www.youtube.com/embed/${req.params.id}`;
+    const info = await ytdl.getBasicInfo(url, { agent: req.ytdlAgent });
+    res.json({ url, info });
+});
+
 router.get("/ytmusic/search", proxyMiddleware, async (req, res) => {
     try {
         const query = req.query.query;
@@ -74,7 +80,7 @@ router.get("/ytmusic/search", proxyMiddleware, async (req, res) => {
         res.json(results);
     } catch (error) {
         console.error("Error in search:", error.message);
-        res.status(500).json({ error: error.message });
+        res.status(500).json(error);
     }
 });
 
@@ -86,7 +92,7 @@ router.get("/ytmusic/track/:id", proxyMiddleware, async (req, res) => {
         });
         res.json(songDetails);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json(error);
     }
 });
 
@@ -108,7 +114,7 @@ router.get("/ytmusic/playlist/:id", proxyMiddleware, async (req, res) => {
         res.json(playlist);
     } catch (error) {
         console.error("Error fetching playlist:", error.message);
-        res.status(500).json({ error: error.message });
+        res.status(500).json(error);
     }
 });
 
@@ -120,7 +126,7 @@ router.get("/ytmusic/artist/:id", proxyMiddleware, async (req, res) => {
         });
         res.json(artistDetails);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json(error);
     }
 });
 
@@ -132,32 +138,12 @@ router.get("/ytmusic/album/:id", proxyMiddleware, async (req, res) => {
         });
         res.json(albumDetails);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json(error);
     }
 });
 
 // Stream song
 
-router.get("/ytmusic/stream/:id", ytdlMiddleware, async (req, res) => {
-    try {
-        const url = `https://www.youtube.com/watch?v=${req.params.id}`;
-        res.setHeader("Content-Type", "audio/mp3");
-        res.setHeader("Cache-Control", "no-cache");
-        res.setHeader("Accept-Ranges", "bytes");
-        res.setHeader("Transfer-Encoding", "chunked");
-        ytdl(url, {
-            filter: "audioonly",
-            quality: "highestaudio",
-            highWaterMark: 24 * 1024,
-            agent: req.ytdlAgent
-        }).pipe(res);
-
-        //got.stream(audioFormat.url).pipe(res); // Stream the audio directly
-    } catch (error) {
-        console.error("Stream error:", error.message);
-        res.status(500).json({ error: error.message });
-    }
-});
 // Category-based APIs
 const categories = ["new", "trending", "topartists", "topmixes"];
 categories.forEach(category => {
