@@ -14,6 +14,15 @@ const ytmusic = new YTMusic();
     }
 })();
 
+router.get("/ytmusic/stream/:id", (req, res) => {
+    try {
+        const streamId = req.params.id;
+        const embedUrl = `https://www.youtube.com/embed/${streamId}`;
+        res.status(200).json({ streamId, embedUrl });
+    } catch (error) {
+        res.status(500).json(error);
+    }
+});
 // Search for Music
 router.get("/ytmusic/search", async (req, res) => {
     try {
@@ -34,15 +43,7 @@ router.get("/ytmusic/search", async (req, res) => {
     }
 });
 
-router.get("/ytmusic/stream/:id", (req, res) => {
-    try {
-        const streamId = req.params.id;
-        const embedUrl = `https://www.youtube.com/embed/${streamId}`;
-        res.status(200).json({ streamId, embedUrl });
-    } catch (error) {
-        res.status(500).json(error);
-    }
-});
+
 
 // Get Song Details
 router.get("/ytmusic/track/:id", async (req, res) => {
