@@ -1,8 +1,8 @@
 const express = require("express");
 const YTMusic = require("ytmusic-api");
+const playdl = require("play-dl");
 
 const router = express.Router();
-
 // Initialize YTMusic
 const ytmusic = new YTMusic();
 (async () => {
@@ -38,7 +38,7 @@ router.get("/ytmusic/stream/:id", (req, res) => {
     try {
         const streamId = req.params.id;
         const embedUrl = `https://www.youtube.com/embed/${streamId}`;
-        res.status(200).json({streamId, embedUrl})
+        res.status(200).json({ streamId, embedUrl });
     } catch (error) {
         res.status(500).json(error);
     }
@@ -55,18 +55,26 @@ router.get("/ytmusic/track/:id", async (req, res) => {
 });
 
 // Playlist Details
+const play = require("play-dl");
+
 router.get("/ytmusic/playlist/:id", async (req, res) => {
     try {
-        const playlist = await ytmusic.getPlaylist(req.params.id);
+        const playlistUrl = `https://www.youtube.com/playlist?list=${req.params.id}`;
+        const playlist = await play.playlist_info(playlistUrl, {
+            incomplete: true
+        });
+
         if (!playlist)
             return res
                 .status(404)
                 .json({ error: "Playlist not found or unavailable" });
-
         res.json(playlist);
     } catch (error) {
         console.error("Error fetching playlist:", error.message);
-        res.status(500).json(error);
+        res.status(500).json({
+            error: "Failed to fetch playlist",
+            details: error.message
+        });
     }
 });
 
