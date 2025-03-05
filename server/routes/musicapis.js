@@ -56,10 +56,9 @@ const ytmusic = new YTMusic();
 })();
 
 // Search for Music
-router.get("/ytmusic/stream/:id", ytdlMiddleware, async (req, res) => {
+router.get("/ytmusic/stream/:id", async (req, res) => {
     const url = `https://www.youtube.com/embed/${req.params.id}`;
-    const info = await ytdl.getBasicInfo(url, { agent: req.ytdlAgent });
-    res.json({ url, info });
+    res.json(url);
 });
 
 router.get("/ytmusic/search", proxyMiddleware, async (req, res) => {
@@ -87,9 +86,7 @@ router.get("/ytmusic/search", proxyMiddleware, async (req, res) => {
 // Get Song Details
 router.get("/ytmusic/track/:id", proxyMiddleware, async (req, res) => {
     try {
-        const songDetails = await ytmusic.getSong(req.params.id, {
-            requestOptions: { agent: req.proxyAgent, headers: req.headers }
-        });
+        const songDetails = await ytmusic.getSong(req.params.id);
         res.json(songDetails);
     } catch (error) {
         res.status(500).json(error);
