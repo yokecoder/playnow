@@ -25,18 +25,19 @@ router.get("/info", async (req, res) => {
 
 //Direct downnload Url
 router.get("/dl", async (req, res) => {
-    const { url, fmt = "video", res: resolution = "480p" } = req.query;
-
-    if (!url) {
-        return res.status(400).json({ status: false, msg: "URL not found" });
-    }
-
     try {
-        // Fetch video info with YTDL_AGENT
+        const { url, fmt = "video", res: resolution = "480p" } = req.query;
+
+        if (!url || !ytdl.validateURL(url)) {
+            return res
+                .status(400)
+                .json({ status: false, msg: "Invalid or missing URL" });
+        }
+
         const videoInfo = await ytdl.getInfo(url, { agent: YTDL_AGENT });
 
+        // Sanitize and format the filename
         let videoTitle = videoInfo.videoDetails.title
-            .normalize("NFKD")
             .replace(/[^\w\s-]/g, "")
             .replace(/\s+/g, "_")
             .substring(0, 100)
@@ -44,7 +45,7 @@ router.get("/dl", async (req, res) => {
         let ext = fmt === "audio" ? "mp3" : "mp4";
         let filename = `${videoTitle}.${ext}`;
 
-        // ✅ Set proper headers for download
+        // Set headers for download
         res.setHeader(
             "Content-Disposition",
             `attachment; filename="${filename}"`
@@ -54,26 +55,40 @@ router.get("/dl", async (req, res) => {
             fmt === "audio" ? "audio/mpeg" : "video/mp4"
         );
 
-        // ✅ Ensure correct filtering for audio-only or video
-        ytdl(url, {
+        // Choose correct format options
+        const options = {
             filter: fmt === "audio" ? "audioonly" : "videoandaudio",
             qualityLabel: fmt === "video" ? resolution : "",
-            highWaterMark: 1024 * 1024 * 10,
+            highWaterMark: 10 * 1024 * 1024, // Buffer optimization
             agent: YTDL_AGENT
-        }).pipe(res);
+        };
+
+        ytdl(url, options)
+            .on("error", () => {
+                if (!res.headersSent) {
+                    res.status(500).json({
+                        status: false,
+                        msg: "Failed to download media"
+                    });
+                }
+            })
+            .pipe(res);
     } catch (error) {
-        res.status(400).json({
-            status: false,
-            msg: "Internal Server Error",
-            details: error.message
-        });
+        if (!res.headersSent) {
+            res.status(500).json({
+                status: false,
+                msg: "Internal Server Error",
+                details: error.message
+            });
+        }
     }
 });
 
 //api for streaming allows to play third-party restricted videos
 router.get("/stream", async (req, res) => {
     try {
-        const { url, res: resolution = "480p", fmt = "video" } = req.query;
+        const { url, res: resolution = "480p" } = req.query;
+
         if (!url || !ytdl.validateURL(url)) {
             return res
                 .status(400)
@@ -81,25 +96,22 @@ router.get("/stream", async (req, res) => {
         }
 
         res.set({
-            "Content-Type": fmt === "audio" ? "audio/mpeg" : "video/mp4",
+            "Content-Type": "video/mp4",
             "Cache-Control": "no-cache",
             Connection: "keep-alive",
             "Transfer-Encoding": "chunked"
         });
 
         ytdl(url, {
-            filter: fmt === "audio" ? "audioonly" : "videoandaudio",
             qualityLabel: resolution,
-            highWaterMark: 24 * 1024,
+            highWaterMark: 32 * 1024,
             agent: YTDL_AGENT
         })
-            .on("error", err => {
-                console.error("Stream Error:", err.message);
-                res.status(500).json({ error: "Failed to stream video" });
-            })
+            .on("error", () =>
+                res.status(500).json({ error: "Failed to stream video" })
+            )
             .pipe(res);
-    } catch (error) {
-        console.error("Stream Error:", error.message);
+    } catch {
         res.status(500).json({ error: "Failed to stream video" });
     }
 });

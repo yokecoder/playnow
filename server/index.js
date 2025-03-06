@@ -10,13 +10,20 @@ const app = express();
 // Middlewares  to parse JSON requests
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+
+app.use(
+    cors({
+        origin: "*",
+        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    })
+);
 
 //Routes
 app.use("/ytapis", ytapis);
 app.use("/musicapis", musicapis);
 
-/* For testing Purpose */
+app.options("*", cors());
+
 app.get("/", (req, res) => {
     res.send("Playnow --- Streaming on the Goo");
 });
