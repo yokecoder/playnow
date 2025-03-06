@@ -2,9 +2,54 @@ const ytdl = require("@distube/ytdl-core");
 const ytpl = require("ytpl");
 const express = require("express");
 const axios = require("axios");
-const { randomProxyAgent } = require("../proxyhelper.js");
 
 const router = express.Router();
+const cookies = [
+    {
+        name: "GPS",
+        value: "1",
+        domain: ".youtube.com",
+        path: "/",
+        secure: true
+    },
+    {
+        name: "YSC",
+        value: "Ahn3kDsGSzs",
+        domain: ".youtube.com",
+        path: "/",
+        secure: true
+    },
+    {
+        name: "VISITOR_INFO1_LIVE",
+        value: "CRyw7TBoQdY",
+        domain: ".youtube.com",
+        path: "/",
+        secure: true
+    },
+    {
+        name: "PREF",
+        value: "f6=40000000&tz=Asia.Calcutta",
+        domain: ".youtube.com",
+        path: "/",
+        secure: true
+    },
+    {
+        name: "VISITOR_PRIVACY_METADATA",
+        value: "CgJJThIEGgAgZA%3D%3D",
+        domain: ".youtube.com",
+        path: "/",
+        secure: true
+    },
+    {
+        name: "__Secure-ROLLOUT_TOKEN",
+        value: "CJ_FraW6i6OIXBCdhfmGsfSLAxjXyPSnsfSLAw%3D%3D",
+        domain: ".youtube.com",
+        path: "/",
+        secure: true
+    }
+];
+
+const YTDL_AGENT = ytdl.createAgent(cookies);
 
 // Return all the data fectched
 router.get("/info", async (req, res) => {
@@ -15,10 +60,7 @@ router.get("/info", async (req, res) => {
             return res.status(400).json({ error: "Url parameter is required" });
         }
 
-        const agent = randomProxyAgent();
-        const options = agent ?? {};
-
-        const info = await ytdl.getInfo(url, options);
+        const info = await ytdl.getInfo(url, { agent: YTDL_AGENT });
         res.json(info);
     } catch (error) {
         console.error("Error fetching video info:", error);
@@ -28,42 +70,32 @@ router.get("/info", async (req, res) => {
 
 //Direct downnload Url
 router.get("/dl", async (req, res) => {
-    const url = req.query.url;
-    const format = req.query.fmt || "video";
-    const resolution = req.query.res || "480p";
-
+    const { url, fmt = "video", res: resolution = "480p" } = req.query;
     if (!url) {
-        return res.status(400).json({ status: false, msg: "url not found" });
+        return res.status(400).json({ status: false, msg: "URL not found" });
     }
 
     try {
-        const agent = randomProxyAgent();
-        const options = agent ?? {}; // Ensure options is correctly structured
+        // Fetch video info with YTDL_AGENT
+        const videoInfo = await ytdl.getInfo(url, { agent: YTDL_AGENT });
 
-        const videoInfo = await ytdl.getInfo(url, options);
         let videoTitle = videoInfo.videoDetails.title
             .normalize("NFKD")
             .replace(/[^\w\s-]/g, "")
             .replace(/\s+/g, "_")
             .substring(0, 100)
             .trim();
-        let ext = format === "audio" ? "mp3" : "mp4";
+        let ext = fmt === "audio" ? "mp3" : "mp4";
         let filename = `${videoTitle}.${ext}`;
 
-        res.setHeader(
-            "Content-Disposition",
-            `attachment; filename="${filename}"`
-        );
-        res.setHeader("Content-Type", `${format}/${ext}`);
+        res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+        res.setHeader("Content-Type", `${fmt}/${ext}`);
 
         ytdl(url, {
-            filter: f =>
-                format === "audio"
-                    ? f.hasAudio && !f.hasVideo
-                    : f.hasAudio && f.hasVideo,
-            qualityLabel: format === "video" ? resolution : "",
-            highWaterMark: 1024 * 1024 * 10,
-            ...options // Apply the options correctly
+            agent: YTDL_AGENT,
+            filter: f => (fmt === "audio" ? f.hasAudio && !f.hasVideo : f.hasAudio && f.hasVideo),
+            qualityLabel: fmt === "video" ? resolution : "",
+            highWaterMark: 1024 * 1024 * 10
         }).pipe(res);
     } catch (error) {
         res.status(400).json({
@@ -73,11 +105,10 @@ router.get("/dl", async (req, res) => {
         });
     }
 });
+
 //api for streaming allows to play third-party restricted videos
 router.get("/stream", async (req, res) => {
     try {
-        const agent = randomProxyAgent();
-        const options = agent ?? {};
         const { url, res: resolution = "480p" } = req.query;
         if (!url || !ytdl.validateURL(url)) {
             return res
@@ -93,9 +124,9 @@ router.get("/stream", async (req, res) => {
         });
 
         ytdl(url, {
+            agent: YTDL_AGENT,
             qualityLabel: resolution,
-            highWaterMark: 24 * 1024,
-            ...options
+            highWaterMark: 24 * 1024
         })
             .on("error", err => {
                 console.error("Stream Error:", err.message);
