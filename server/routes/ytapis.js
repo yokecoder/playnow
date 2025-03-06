@@ -26,6 +26,7 @@ router.get("/info", async (req, res) => {
 //Direct downnload Url
 router.get("/dl", async (req, res) => {
     const { url, fmt = "video", res: resolution = "480p" } = req.query;
+
     if (!url) {
         return res.status(400).json({ status: false, msg: "URL not found" });
     }
@@ -43,17 +44,19 @@ router.get("/dl", async (req, res) => {
         let ext = fmt === "audio" ? "mp3" : "mp4";
         let filename = `${videoTitle}.${ext}`;
 
+        // ✅ Set proper headers for download
         res.setHeader(
             "Content-Disposition",
             `attachment; filename="${filename}"`
         );
-        res.setHeader("Content-Type", `${fmt}/${ext}`);
+        res.setHeader(
+            "Content-Type",
+            fmt === "audio" ? "audio/mpeg" : "video/mp4"
+        );
 
+        // ✅ Ensure correct filtering for audio-only or video
         ytdl(url, {
-            filter: f =>
-                fmt === "audio"
-                    ? f.hasAudio && !f.hasVideo
-                    : f.hasAudio && f.hasVideo,
+            filter: fmt === "audio" ? "audioonly" : "videoandaudio",
             qualityLabel: fmt === "video" ? resolution : "",
             highWaterMark: 1024 * 1024 * 10,
             agent: YTDL_AGENT
@@ -70,7 +73,7 @@ router.get("/dl", async (req, res) => {
 //api for streaming allows to play third-party restricted videos
 router.get("/stream", async (req, res) => {
     try {
-        const { url, res: resolution = "480p" } = req.query;
+        const { url, res: resolution = "480p", fmt = "video" } = req.query;
         if (!url || !ytdl.validateURL(url)) {
             return res
                 .status(400)
@@ -78,13 +81,14 @@ router.get("/stream", async (req, res) => {
         }
 
         res.set({
-            "Content-Type": "video/mp4",
+            "Content-Type": fmt === "audio" ? "audio/mpeg" : "video/mp4",
             "Cache-Control": "no-cache",
             Connection: "keep-alive",
             "Transfer-Encoding": "chunked"
         });
 
         ytdl(url, {
+            filter: fmt === "audio" ? "audioonly" : "videoandaudio",
             qualityLabel: resolution,
             highWaterMark: 24 * 1024,
             agent: YTDL_AGENT
