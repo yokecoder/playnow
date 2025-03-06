@@ -2,54 +2,9 @@ const ytdl = require("@distube/ytdl-core");
 const ytpl = require("ytpl");
 const express = require("express");
 const axios = require("axios");
+const YTDL_AGENT = require("../ytdlagent.js");
 
 const router = express.Router();
-const cookies = [
-    {
-        name: "GPS",
-        value: "1",
-        domain: ".youtube.com",
-        path: "/",
-        secure: true
-    },
-    {
-        name: "YSC",
-        value: "Ahn3kDsGSzs",
-        domain: ".youtube.com",
-        path: "/",
-        secure: true
-    },
-    {
-        name: "VISITOR_INFO1_LIVE",
-        value: "CRyw7TBoQdY",
-        domain: ".youtube.com",
-        path: "/",
-        secure: true
-    },
-    {
-        name: "PREF",
-        value: "f6=40000000&tz=Asia.Calcutta",
-        domain: ".youtube.com",
-        path: "/",
-        secure: true
-    },
-    {
-        name: "VISITOR_PRIVACY_METADATA",
-        value: "CgJJThIEGgAgZA%3D%3D",
-        domain: ".youtube.com",
-        path: "/",
-        secure: true
-    },
-    {
-        name: "__Secure-ROLLOUT_TOKEN",
-        value: "CJ_FraW6i6OIXBCdhfmGsfSLAxjXyPSnsfSLAw%3D%3D",
-        domain: ".youtube.com",
-        path: "/",
-        secure: true
-    }
-];
-
-const YTDL_AGENT = ytdl.createAgent(cookies);
 
 // Return all the data fectched
 router.get("/info", async (req, res) => {
@@ -59,8 +14,8 @@ router.get("/info", async (req, res) => {
         if (!url) {
             return res.status(400).json({ error: "Url parameter is required" });
         }
-
-        const info = await ytdl.getInfo(url, { agent: YTDL_AGENT });
+        const options = { agent: YTDL_AGENT };
+        const info = await ytdl.getInfo(url, options);
         res.json(info);
     } catch (error) {
         console.error("Error fetching video info:", error);
@@ -88,14 +43,20 @@ router.get("/dl", async (req, res) => {
         let ext = fmt === "audio" ? "mp3" : "mp4";
         let filename = `${videoTitle}.${ext}`;
 
-        res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+        res.setHeader(
+            "Content-Disposition",
+            `attachment; filename="${filename}"`
+        );
         res.setHeader("Content-Type", `${fmt}/${ext}`);
 
         ytdl(url, {
-            agent: YTDL_AGENT,
-            filter: f => (fmt === "audio" ? f.hasAudio && !f.hasVideo : f.hasAudio && f.hasVideo),
+            filter: f =>
+                fmt === "audio"
+                    ? f.hasAudio && !f.hasVideo
+                    : f.hasAudio && f.hasVideo,
             qualityLabel: fmt === "video" ? resolution : "",
-            highWaterMark: 1024 * 1024 * 10
+            highWaterMark: 1024 * 1024 * 10,
+            agent: YTDL_AGENT
         }).pipe(res);
     } catch (error) {
         res.status(400).json({
@@ -124,9 +85,9 @@ router.get("/stream", async (req, res) => {
         });
 
         ytdl(url, {
-            agent: YTDL_AGENT,
             qualityLabel: resolution,
-            highWaterMark: 24 * 1024
+            highWaterMark: 24 * 1024,
+            agent: YTDL_AGENT
         })
             .on("error", err => {
                 console.error("Stream Error:", err.message);
