@@ -34,7 +34,7 @@ router.get("/dl", async (req, res) => {
                 .json({ status: false, msg: "Invalid or missing URL" });
         }
 
-        const videoInfo = await ytdl.getInfo(url, { agent: YTDL_AGENT });
+        const videoInfo = await ytdl.getBasicInfo(url, { agent: YTDL_AGENT });
 
         // Sanitize and format the filename
         let videoTitle = videoInfo.videoDetails.title
@@ -44,7 +44,7 @@ router.get("/dl", async (req, res) => {
             .trim();
         let ext = fmt === "audio" ? "mp3" : "mp4";
         let filename = `${videoTitle}.${ext}`;
-
+        let stream;
         // Set headers for download
         res.setHeader(
             "Content-Disposition",
@@ -52,35 +52,36 @@ router.get("/dl", async (req, res) => {
         );
         res.setHeader(
             "Content-Type",
-            fmt === "audio" ? "audio/mpeg" : "video/mp4"
+            fmt === "audio" ? "audio/mp3" : "video/mp4"
         );
+        if (fmt === "video") {
+            stream = ytdl(url, {
+                qualityLabel: resolution,
+                highWaterMark: 32 * 1024,
+                agent: YTDL_AGENT
+            });
+        } else if (fmt === "audio") {
+            stream = ytdl(url, {
+                filter: "audioonly",
+                quality: "highestaudio",
+                highWaterMark: 32 * 1024,
+                agent: YTDL_AGENT
+            });
+        } else {
+            return res
+                .status(500)
+                .json({ status: false, msg: "invalid format" });
+        }
+
+        if (stream) stream.pipe(res);
 
         // Choose correct format options
-        const options = {
-            filter: fmt === "audio" ? "audioonly" : "videoandaudio",
-            qualityLabel: fmt === "video" ? resolution : "",
-            highWaterMark: 10 * 1024 * 1024, // Buffer optimization
-            agent: YTDL_AGENT
-        };
-
-        ytdl(url, options)
-            .on("error", () => {
-                if (!res.headersSent) {
-                    res.status(500).json({
-                        status: false,
-                        msg: "Failed to download media"
-                    });
-                }
-            })
-            .pipe(res);
     } catch (error) {
-        if (!res.headersSent) {
-            res.status(500).json({
-                status: false,
-                msg: "Internal Server Error",
-                details: error.message
-            });
-        }
+        res.status(500).json({
+            status: false,
+            msg: "Internal Server Error",
+            details: error.message
+        });
     }
 });
 
@@ -106,11 +107,35 @@ router.get("/stream", async (req, res) => {
             qualityLabel: resolution,
             highWaterMark: 32 * 1024,
             agent: YTDL_AGENT
-        })
-            .on("error", () =>
-                res.status(500).json({ error: "Failed to stream video" })
-            )
-            .pipe(res);
+        }).pipe(res);
+    } catch {
+        res.status(500).json({ error: "Failed to stream video" });
+    }
+});
+
+router.get("/streamAudio", async (req, res) => {
+    try {
+        const { url } = req.query;
+
+        if (!url || !ytdl.validateURL(url)) {
+            return res
+                .status(400)
+                .json({ error: "Invalid or missing YouTube Music URL" });
+        }
+
+        res.set({
+            "Content-Type": "audio/mp3",
+            "Cache-Control": "no-cache",
+            Connection: "keep-alive",
+            "Transfer-Encoding": "chunked"
+        });
+
+        ytdl(url, {
+            filter: "audioonly",
+            quality: "highestaudio",
+            highWaterMark: 32 * 1024,
+            agent: YTDL_AGENT
+        }).pipe(res);
     } catch {
         res.status(500).json({ error: "Failed to stream video" });
     }

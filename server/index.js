@@ -7,31 +7,31 @@ require("dotenv").config();
 // Initialize an Express app
 const app = express();
 
-// Middlewares  to parse JSON requests
+// Middlewares to parse JSON requests
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Enable CORS
 app.use(
     cors({
         origin: "*",
-        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+        methods: ["GET", "POST", "PUT", "DELETE"]
     })
 );
 
-//Routes
+// Routes
 app.use("/ytapis", ytapis);
 app.use("/musicapis", musicapis);
 
-app.options("*", cors());
-
+// Root endpoint
 app.get("/", (req, res) => {
-    res.send("Playnow --- Streaming on the Goo");
+    res.send("PlayNow --- Streaming on the Go");
 });
 
-// Set the server to listen on port 3000
+// Set the server to listen on port
 const PORT = process.env.PORT || 3000;
-const HOST = process.env.HOST || "localhost";
+const HOST = process.env.HOST || "0.0.0.0"; // Accept external connections
 
-app.listen(PORT, () => {
+app.listen(PORT, HOST, () => {
     console.log(`Server is running on http://${HOST}:${PORT}`);
 });
