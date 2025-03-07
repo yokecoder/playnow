@@ -52,6 +52,7 @@ router.get("/dl", async (req, res) => {
         res.setHeader("Content-Type", "video/mp4");
 
         ytdl(url, {
+            filter: "videoandaudio",
             qualityLabel: resolution,
             highWaterMark: 32 * 1024,
             agent: YTDL_AGENT
@@ -96,7 +97,7 @@ router.get("/dlAudio", async (req, res) => {
         res.setHeader("Content-Type", "audio/mp3");
 
         ytdl(url, {
-            filter: fmt => fmt.hasAudio && !fmt.hasVideo,
+            filter: "audioonly",
             highWaterMark: 12 * 1024,
             agent: YTDL_AGENT
         }).pipe(res);
@@ -130,8 +131,9 @@ router.get("/stream", (req, res) => {
         });
 
         ytdl(url, {
+            filter: "videoandaudio",
             qualityLabel: resolution,
-            highWaterMark: 32 * 1024,
+            highWaterMark: 8 * 256,
             agent: YTDL_AGENT
         }).pipe(res);
     } catch {
@@ -152,16 +154,15 @@ router.get("/streamAudio", (req, res) => {
         res.set({
             "Content-Type": "audio/mpeg",
             "Cache-Control": "no-cache",
-            Connection: "keep-alive",
-            "Transfer-Encoding": "chunked"
+            "Transfer-Encoding": "chunked",
+            Connection: "keep-alive"
         });
 
         ytdl(url, {
-            filter: fmt => fmt.hasAudio && !fmt.hasVideo,
+            filter: "audioonly",
             highWaterMark: 12 * 1024,
             agent: YTDL_AGENT
         }).pipe(res);
-        
     } catch {
         res.status(500).json({ error: "Failed to stream video" });
     }

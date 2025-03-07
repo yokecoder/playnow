@@ -20,30 +20,26 @@ export default function AudioPlayer({ trackId }) {
     const { skipToPrevious, skipToNext } = useTrackQueue();
 
     const fetchTrackInfo = async ({ queryKey }) => {
-        const [, trackId] = queryKey; // Extract trackId from queryKey
-        if (!trackId) return null; // Prevent API call with undefined ID
-        // Check localStorage for cached track info
-
+        const [, trackId] = queryKey;
+        if (!trackId) return null;
         try {
             const response = await axios.get(
                 `https://playnow.onrender.com/musicapis/ytmusic/track/${trackId}`
             );
-
             return response.data;
         } catch (error) {
-            console.log("Error fetching track info:", error);
+            console.error("Error fetching track info:", error);
             return null;
         }
     };
 
-    // Fetch Track Info using React Query
     const { data: trackInfo, isLoading } = useQuery({
         queryKey: ["trackInfo", trackId],
         queryFn: fetchTrackInfo,
         enabled: !!trackId,
         cacheTime: 1000 * 60 * 30
     });
-    // Format time to min:sec
+
     const formatTime = seconds => {
         if (isNaN(seconds) || seconds <= 0) return "00:00";
         const minutes = Math.floor(seconds / 60);
@@ -54,37 +50,34 @@ export default function AudioPlayer({ trackId }) {
         )}`;
     };
 
-    // Update duration when audio metadata loads
     const handleLoadedMetadata = () => {
         const audio = trackRef.current;
         if (audio) {
-            setAudioDuration(audio.duration);
+            setAudioDuration(audio.duration || 0);
         }
     };
 
-    // Update progress as the audio plays
     const handleTimeUpdate = () => {
         const audio = trackRef.current;
         if (audio) {
             setCurrentTime(audio.currentTime);
-            setProgress((audio.currentTime / audio.duration) * 100);
+            const duration = audio.duration || 1; // Prevent division by zero
+            setProgress((audio.currentTime / duration) * 100);
         }
     };
 
-    // Handle Seeking of progress bar
     const handleSeek = e => {
         const audio = trackRef.current;
         if (!audio) return;
         const newTime = (e.target.value / 100) * (audio.duration || 1);
         audio.currentTime = newTime;
         setCurrentTime(newTime);
-        setProgress(e.target.value);
+        setProgress(parseFloat(e.target.value) || 0);
     };
 
     const togglePlay = () => {
         const audio = trackRef.current;
         if (!audio) return;
-
         if (!isPlaying) {
             audio.play();
         } else {
@@ -98,10 +91,41 @@ export default function AudioPlayer({ trackId }) {
         trackRef.current.play();
     };
 
-    const streamUrl = `https://server-playnow-production.up.railway.app/ytapis/streamAudio?url=https://www.youtube.com/embed/${
-        trackInfo?.videoId ?? trackId
-    }`;
+    const streamUrl = `https://server-playnow-production.up.railway.app/ytapis/streamAudio?url=https://www.youtube.com/watch?v=${trackId}`;
+    useEffect(() => {
+        const audio = trackRef.current;
+        if (!audio || !trackId) return;
 
+        // Pause and reset previous track before switching
+        audio.pause();
+        setIsPlaying(false);
+        setCurrentTime(0);
+        setProgress(0);
+
+        // Reset source and reload
+        audio.src = "";
+        audio.load(); // Ensure clean reload before setting new source
+
+        // Set new source
+        audio.src = streamUrl;
+
+        const handleCanPlay = () => {
+            if (audio.readyState >= 3) {
+                // Ensure enough data is loaded
+                setAudioDuration(audio.duration || 0);
+                audio
+                    .play()
+                    .catch(err => console.warn("Autoplay prevented:", err));
+                setIsPlaying(true);
+            }
+        };
+
+        audio.addEventListener("canplay", handleCanPlay);
+
+        return () => {
+            audio.removeEventListener("canplay", handleCanPlay);
+        };
+    }, [trackId]);
     useEffect(() => {
         if (!trackInfo || !trackRef.current) return;
         if ("mediaSession" in navigator) {
@@ -110,12 +134,11 @@ export default function AudioPlayer({ trackId }) {
                 artist: trackInfo?.artist?.name || "Unknown Artist",
                 album: "PlayNow Music",
                 artwork: trackInfo?.thumbnails?.map(thumbnail => ({
-                    src: thumbnail.url || "", // Ensure 'src' exists
-                    sizes:
-                        thumbnail.width && thumbnail.height
-                            ? `${thumbnail.width}x${thumbnail.height}`
-                            : "512x512",
-                    type: "image/png" // Adjust based on the actual format
+                    src: thumbnail.url || "",
+                    sizes: `${thumbnail.width || 512}x${
+                        thumbnail.height || 512
+                    }`,
+                    type: "image/png"
                 })) || [
                     {
                         src: "fallback-image-url.png",
@@ -171,12 +194,13 @@ export default function AudioPlayer({ trackId }) {
             window.removeEventListener("beforeunload", handleBeforeUnload);
         };
     }, []);
+
     return (
         <>
             <audio
                 src={streamUrl}
                 ref={trackRef}
-                onLoadedMetaData={() => {
+                onLoadedMetadata={() => {
                     handleLoadedMetadata();
                     startAutoPlay();
                 }}
@@ -194,7 +218,6 @@ export default function AudioPlayer({ trackId }) {
                     onSkipPrevious={skipToPrevious}
                 />
             ) : (
-                /* Full Screen Audio Player Component */
                 <div className="audio-player">
                     <div
                         style={{
@@ -207,7 +230,7 @@ export default function AudioPlayer({ trackId }) {
                                 ? `url("${
                                       trackInfo?.thumbnails?.[
                                           trackInfo?.thumbnails?.length - 1
-                                      ].url
+                                      ]?.url
                                   }")`
                                 : "",
                             backgroundSize: "cover",
@@ -252,7 +275,7 @@ export default function AudioPlayer({ trackId }) {
                             type="range"
                             min="0"
                             max="100"
-                            value={progress}
+                            value={isNaN(progress) ? 0 : progress}
                             onChange={handleSeek}
                         />
                         <span>{formatTime(audioDuration)}</span>
@@ -283,7 +306,6 @@ export default function AudioPlayer({ trackId }) {
         </>
     );
 }
-
 export const AudioPlayerMini = ({
     trackInfo,
     onToggle,

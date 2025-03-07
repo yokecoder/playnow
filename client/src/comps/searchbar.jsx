@@ -132,7 +132,9 @@ export const MusicSearch = ({ hint, search, onChange, isOpen, onClose }) => {
                                         <span className="title">Songs</span>
                                         {groupedResults?.song?.map(data => (
                                             <>
-                                                <div className="music-card">
+                                                <div
+                                                    key={data?.videoId}
+                                                    className="music-card">
                                                     <IconButton className="thumbnail">
                                                         <div
                                                             style={{
