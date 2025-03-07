@@ -10,7 +10,6 @@ const router = express.Router();
 router.get("/info", async (req, res) => {
     try {
         const { url } = req.query;
-
         if (!url) {
             return res.status(400).json({ error: "Url parameter is required" });
         }
@@ -26,7 +25,7 @@ router.get("/info", async (req, res) => {
 //Direct downnload Url
 router.get("/dl", async (req, res) => {
     try {
-        const { url, fmt = "video", res: resolution = "480p" } = req.query;
+        const { url, res: resolution = "480p" } = req.query;
 
         if (!url || !ytdl.validateURL(url)) {
             return res
@@ -42,38 +41,66 @@ router.get("/dl", async (req, res) => {
             .replace(/\s+/g, "_")
             .substring(0, 100)
             .trim();
-        let ext = fmt === "audio" ? "mp3" : "mp4";
-        let filename = `${videoTitle}.${ext}`;
-        let stream;
+
+        let filename = `${videoTitle}.mp4`;
+
         // Set headers for download
         res.setHeader(
             "Content-Disposition",
             `attachment; filename="${filename}"`
         );
-        res.setHeader(
-            "Content-Type",
-            fmt === "audio" ? "audio/mp3" : "video/mp4"
-        );
-        if (fmt === "video") {
-            stream = ytdl(url, {
-                qualityLabel: resolution,
-                highWaterMark: 32 * 1024,
-                agent: YTDL_AGENT
-            });
-        } else if (fmt === "audio") {
-            stream = ytdl(url, {
-                filter: "audioonly",
-                quality: "highestaudio",
-                highWaterMark: 32 * 1024,
-                agent: YTDL_AGENT
-            });
-        } else {
+        res.setHeader("Content-Type", "video/mp4");
+
+        ytdl(url, {
+            qualityLabel: resolution,
+            highWaterMark: 32 * 1024,
+            agent: YTDL_AGENT
+        }).pipe(res);
+
+        // Choose correct format options
+    } catch (error) {
+        res.status(500).json({
+            status: false,
+            msg: "Internal Server Error",
+            details: error.message
+        });
+    }
+});
+
+router.get("/dlAudio", async (req, res) => {
+    try {
+        const { url } = req.query;
+
+        if (!url || !ytdl.validateURL(url)) {
             return res
-                .status(500)
-                .json({ status: false, msg: "invalid format" });
+                .status(400)
+                .json({ status: false, msg: "Invalid or missing URL" });
         }
 
-        if (stream) stream.pipe(res);
+        const videoInfo = await ytdl.getBasicInfo(url, { agent: YTDL_AGENT });
+
+        // Sanitize and format the filename
+        let videoTitle = videoInfo.videoDetails.title
+            .replace(/[^\w\s-]/g, "")
+            .replace(/\s+/g, "_")
+            .substring(0, 100)
+            .trim();
+
+        let filename = `${videoTitle}.mp3`;
+
+        // Set headers for download
+        res.setHeader(
+            "Content-Disposition",
+            `attachment; filename="${filename}"`
+        );
+        res.setHeader("Content-Type", "audio/mp3");
+
+        ytdl(url, {
+            filter: "audioonly",
+            quality: "highestaudio",
+            highWaterMark: 32 * 1024,
+            agent: YTDL_AGENT
+        }).pipe(res);
 
         // Choose correct format options
     } catch (error) {
@@ -86,7 +113,7 @@ router.get("/dl", async (req, res) => {
 });
 
 //api for streaming allows to play third-party restricted videos
-router.get("/stream", async (req, res) => {
+router.get("/stream", (req, res) => {
     try {
         const { url, res: resolution = "480p" } = req.query;
 
@@ -113,7 +140,7 @@ router.get("/stream", async (req, res) => {
     }
 });
 
-router.get("/streamAudio", async (req, res) => {
+router.get("/streamAudio", (req, res) => {
     try {
         const { url } = req.query;
 

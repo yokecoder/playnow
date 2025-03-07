@@ -14,15 +14,7 @@ const ytmusic = new YTMusic();
     }
 })();
 
-router.get("/ytmusic/stream/:id", (req, res) => {
-    try {
-        const streamId = req.params.id;
-        const embedUrl = `https://www.youtube.com/embed/${streamId}`;
-        res.status(200).json({ streamId, embedUrl });
-    } catch (error) {
-        res.status(500).json(error);
-    }
-});
+
 // Search for Music
 router.get("/ytmusic/search", async (req, res) => {
     try {
@@ -38,6 +30,7 @@ router.get("/ytmusic/search", async (req, res) => {
 
         res.json(results);
     } catch (error) {
+        
         console.error("Error in search:", error.message);
         res.status(500).json(error);
     }
@@ -55,13 +48,11 @@ router.get("/ytmusic/track/:id", async (req, res) => {
     }
 });
 
-// Playlist Details
-const play = require("play-dl");
 
 router.get("/ytmusic/playlist/:id", async (req, res) => {
     try {
         const playlistUrl = `https://www.youtube.com/playlist?list=${req.params.id}`;
-        const playlist = await play.playlist_info(playlistUrl, {
+        const playlist = await playdl.playlist_info(playlistUrl, {
             incomplete: true
         });
 
@@ -101,7 +92,7 @@ router.get("/ytmusic/album/:id", async (req, res) => {
 
 // Category-based APIs (Trending, New, Top Artists, Top Mixes)
 const categories = {
-    newv: "latest songs",
+    newsongs: "latest songs",
     trending: "trending music",
     topartists: "top artists",
     topmixes: "top mixes"

@@ -15,13 +15,22 @@ export default function Music() {
     const [playlistId, setPlaylistId] = useState(null);
     const { currentTrack, addToQueue } = useTrackQueue();
 
+    useEffect(() => {
+        const interval = setInterval(() => {
+            axios
+                .get("https://playnow.onrender.com/")
+                .catch(err => console.error("Keep-alive request failed", err));
+        }, 30000);
+
+        return () => clearInterval(interval);
+    }, []);
     const openPlaylist = id => {
         setPlaylistId(id);
         setPlaylistOpen(true);
     };
     // Api endpoints for explore data
 
-    const endpoints = ["/new", "/trending", "/topmixes", "/topartists"];
+    const endpoints = ["/newsongs", "/trending", "/topmixes", "/topartists"];
 
     // Helper function to fetch API data
     const fetchData = async endpoint => {
@@ -69,9 +78,9 @@ export default function Music() {
                     </div>
                 ) : (
                     <>
-                        {exploreData["/new"].length > 0 && (
+                        {exploreData["/newsongs"].length > 0 && (
                             <ExploreSection caption="New Releases">
-                                {exploreData["/new"].map(
+                                {exploreData["/newsongs"].map(
                                     (data, idx) =>
                                         data.type !== "ARTIST" && (
                                             <ExploreCard

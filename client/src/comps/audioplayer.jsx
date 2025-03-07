@@ -98,7 +98,7 @@ export default function AudioPlayer({ trackId }) {
         trackRef.current.play();
     };
 
-    const streamUrl = `https://www.youtube.com/embed/${
+    const streamUrl = `https://server-playnow-production.up.railway.app/ytapis/streamAudio?url=https://www.youtube.com/embed/${
         trackInfo?.videoId ?? trackId
     }`;
 
@@ -173,15 +173,15 @@ export default function AudioPlayer({ trackId }) {
     }, []);
     return (
         <>
-            <iframe
-                src={`${streamUrl}?autoplay=1&loop=1&playlist=${trackId}`}
-                allow="autoplay; encrypted-media; picture-in-picture"
-                style={{
-                    position: "absolute",
-                    width: "1px",
-                    height: "1px",
-                    opacity: 0
+            <audio
+                src={streamUrl}
+                ref={trackRef}
+                onLoadedMetaData={() => {
+                    handleLoadedMetadata();
+                    startAutoPlay();
                 }}
+                onEnded={skipToNext}
+                onTimeUpdate={handleTimeUpdate}
             />
 
             {miniPlayer ? (

@@ -10,13 +10,14 @@ const YtPlayer = ({ url }) => {
     ///const [isReady, setIsReady] = useState(false);
     const [format, setFormat] = useState("video");
     const [resolution, setResolution] = useState("480p");
-    const downloadUrl = `https://server-playnow-production.up.railway.app/ytapis/dl?url=${encodeURIComponent(
-        url
-    )}&fmt=${format}&res=${resolution}`;
-    const getEmbedUrl = vurl =>
-        `https://www.youtube-nocookie.com/embed/${
-            vurl.match(/(?:v=|\/)([0-9A-Za-z_-]{11})/)[1]
-        }`;
+    const downloadUrl =
+        format === "video"
+            ? `https://server-playnow-production.up.railway.app/ytapis/dl?url=${encodeURIComponent(
+                  url
+              )}&res=${resolution}`
+            : `https://server-playnow-production.up.railway.app/ytapis/dlAudio?url=${encodeURIComponent(
+                  url
+              )}`;
 
     return (
         <>
