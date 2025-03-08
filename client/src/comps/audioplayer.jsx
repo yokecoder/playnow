@@ -91,43 +91,8 @@ export default function AudioPlayer({ trackId }) {
         trackRef.current.play();
     };
 
-    const streamUrl = `https://server-playnow-production.up.railway.app/ytapis/streamAudio?url=https://www.youtube.com/watch?v=${trackId}`;
     useEffect(() => {
-        const audio = trackRef.current;
-        if (!audio || !trackId) return;
-
-        // Pause and reset previous track before switching
-        audio.pause();
-        setIsPlaying(false);
-        setCurrentTime(0);
-        setProgress(0);
-
-        // Reset source and reload
-        audio.src = "";
-        audio.load(); // Ensure clean reload before setting new source
-
-        // Set new source
-        audio.src = streamUrl;
-
-        const handleCanPlay = () => {
-            if (audio.readyState >= 3) {
-                // Ensure enough data is loaded
-                setAudioDuration(audio.duration || 0);
-                audio
-                    .play()
-                    .catch(err => console.warn("Autoplay prevented:", err));
-                setIsPlaying(true);
-            }
-        };
-
-        audio.addEventListener("canplay", handleCanPlay);
-
-        return () => {
-            audio.removeEventListener("canplay", handleCanPlay);
-        };
-    }, [trackId]);
-    useEffect(() => {
-        if (!trackInfo || !trackRef.current) return;
+        if (!trackRef.current) return;
         if ("mediaSession" in navigator) {
             navigator.mediaSession.metadata = new MediaMetadata({
                 title: trackInfo?.name || "Unknown Title",
@@ -180,7 +145,7 @@ export default function AudioPlayer({ trackId }) {
                 setIsPlaying(false);
             });
         }
-    }, [trackInfo, trackRef, trackId]);
+    }, [trackRef, trackId]);
 
     useEffect(() => {
         const audio = trackRef.current;
@@ -194,16 +159,13 @@ export default function AudioPlayer({ trackId }) {
             window.removeEventListener("beforeunload", handleBeforeUnload);
         };
     }, []);
-
+    const streamUrl = `https://server-playnow-production.up.railway.app/ytapis/streamAudio?url=https://youtube.com/watch?v=${trackId}`;
+    console.log(streamUrl);
     return (
         <>
             <audio
                 src={streamUrl}
                 ref={trackRef}
-                onLoadedMetadata={() => {
-                    handleLoadedMetadata();
-                    startAutoPlay();
-                }}
                 onEnded={skipToNext}
                 onTimeUpdate={handleTimeUpdate}
             />

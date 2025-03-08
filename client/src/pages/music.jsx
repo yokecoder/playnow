@@ -15,15 +15,6 @@ export default function Music() {
     const [playlistId, setPlaylistId] = useState(null);
     const { currentTrack, addToQueue } = useTrackQueue();
 
-    useEffect(() => {
-        const interval = setInterval(() => {
-            axios
-                .get("https://playnow.onrender.com/")
-                .catch(err => console.error("Keep-alive request failed", err));
-        }, 30000);
-
-        return () => clearInterval(interval);
-    }, []);
     const openPlaylist = id => {
         setPlaylistId(id);
         setPlaylistOpen(true);

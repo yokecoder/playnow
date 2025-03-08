@@ -2,6 +2,7 @@ const ytdl = require("@distube/ytdl-core");
 const ytpl = require("ytpl");
 const express = require("express");
 const axios = require("axios");
+const playdl = require("play-dl");
 const YTDL_AGENT = require("../ytdlagent.js");
 
 const router = express.Router();
@@ -133,7 +134,7 @@ router.get("/stream", (req, res) => {
         ytdl(url, {
             filter: "videoandaudio",
             qualityLabel: resolution,
-            highWaterMark: 8 * 256,
+            highWaterMark: 16 * 512,
             agent: YTDL_AGENT
         }).pipe(res);
     } catch {
@@ -141,33 +142,50 @@ router.get("/stream", (req, res) => {
     }
 });
 
-router.get("/streamAudio", (req, res) => {
+router.get("/streamAudio", async (req, res) => {
     try {
-        const { url } = req.query;
+        const id = req.query.id;
+        if (!id) return res.status(400).json({ error: "Missing ID parameter" });
 
-        if (!url || !ytdl.validateURL(url)) {
+        const url = `https://www.youtube.com/watch?v=${id}`;
+
+        // Get video info
+        const info = await ytdl.getInfo(url, { agent: YTDL_AGENT });
+
+        // Choose a format with a reasonable bitrate (between 64kbps and best available)
+        const audioFormats = info.formats.filter(format =>
+            format.mimeType.includes("audio")
+        );
+        const format = audioFormats.reduce((best, current) =>
+            current.bitrate < best.bitrate && current.bitrate > 64000
+                ? current
+                : best
+        );
+
+        if (!format)
             return res
-                .status(400)
-                .json({ error: "Invalid or missing YouTube Music URL" });
-        }
+                .status(500)
+                .json({ error: "No suitable audio format found" });
 
-        res.set({
-            "Content-Type": "audio/mpeg",
-            "Cache-Control": "no-cache",
-            "Transfer-Encoding": "chunked",
-            Connection: "keep-alive"
+        // Stream with optimized settings
+        const stream = ytdl(url, {
+            format,
+            agent: YTDL_AGENT,
+            highWaterMark: 512 * 1024, // 256 KB buffer for stability
+            dlChunkSize: 24 * 1024 // Smaller chunks to prevent excessive data usage
         });
 
-        ytdl(url, {
-            filter: "audioonly",
-            highWaterMark: 12 * 1024,
-            agent: YTDL_AGENT
-        }).pipe(res);
-    } catch {
-        res.status(500).json({ error: "Failed to stream video" });
+        // Set headers
+        res.setHeader("Content-Type", format.mimeType.split(";")[0]);
+        res.setHeader("Content-Disposition", `inline; filename="${id}.mp4"`);
+
+        // Pipe the stream
+        stream.pipe(res);
+    } catch (error) {
+        console.error("Error streaming audio:", error);
+        res.status(500).json({ error: "Failed to stream audio" });
     }
 });
-
 //information About a Playlist Url
 router.post("/playlistinfo", async (req, res) => {
     const url = req.body.url;
