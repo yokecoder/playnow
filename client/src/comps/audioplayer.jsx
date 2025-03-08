@@ -166,6 +166,10 @@ export default function AudioPlayer({ trackId }) {
             <audio
                 src={streamUrl}
                 ref={trackRef}
+                onLoadedMetadata={() => {
+                    handleLoadedMetadata();
+                    startAutoPlay();
+                }}
                 onEnded={skipToNext}
                 onTimeUpdate={handleTimeUpdate}
             />
