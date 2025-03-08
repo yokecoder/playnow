@@ -145,7 +145,7 @@ export default function AudioPlayer({ trackId }) {
                 setIsPlaying(false);
             });
         }
-    }, [trackRef, trackId]);
+    }, [trackRef, trackId, trackInfo]);
 
     useEffect(() => {
         const audio = trackRef.current;
@@ -159,8 +159,8 @@ export default function AudioPlayer({ trackId }) {
             window.removeEventListener("beforeunload", handleBeforeUnload);
         };
     }, []);
-    const streamUrl = `https://server-playnow-production.up.railway.app/ytapis/streamAudio?url=https://youtube.com/watch?v=${trackId}`;
-    console.log(streamUrl);
+    const streamUrl = `https://server-playnow-production.up.railway.app/ytapis/streamAudio?id=${trackId}`;
+
     return (
         <>
             <audio
