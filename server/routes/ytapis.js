@@ -171,7 +171,7 @@ router.get("/streamAudio", async (req, res) => {
         const stream = ytdl(url, {
             format,
             agent: YTDL_AGENT,
-            highWaterMark: 512 * 1024, // 256 KB buffer for stability
+            highWaterMark: 24 * 1024, // 256 KB buffer for stability
             dlChunkSize: 24 * 1024 // Smaller chunks to prevent excessive data usage
         });
 
