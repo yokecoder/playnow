@@ -149,38 +149,26 @@ router.get("/streamAudio", async (req, res) => {
 
         const url = `https://www.youtube.com/watch?v=${id}`;
 
-        // Get video info
-        const info = await ytdl.getInfo(url, { agent: YTDL_AGENT });
-
-        // Choose a format with a reasonable bitrate (between 64kbps and best available)
-        const audioFormats = info.formats.filter(format =>
-            format.mimeType.includes("audio")
-        );
-        const format = audioFormats.reduce((best, current) =>
-            current.bitrate < best.bitrate && current.bitrate > 64000
-                ? current
-                : best
-        );
-
-        if (!format)
-            return res
-                .status(500)
-                .json({ error: "No suitable audio format found" });
-
-        // Stream with optimized settings
+        // Get stream directly without fetching full info
         const stream = ytdl(url, {
-            format,
+            filter: "audioonly",
+            quality: "highestaudio",
             agent: YTDL_AGENT,
-            highWaterMark: 24 * 1024, // 256 KB buffer for stability
-            dlChunkSize: 24 * 1024 // Smaller chunks to prevent excessive data usage
+            highWaterMark: 1 * 1024 * 1024 // Increase buffer to 1MB for stability
         });
 
         // Set headers
-        res.setHeader("Content-Type", format.mimeType.split(";")[0]);
+        res.setHeader("Content-Type", "audio/mp4");
         res.setHeader("Content-Disposition", `inline; filename="${id}.mp4"`);
 
-        // Pipe the stream
+        // Pipe stream
         stream.pipe(res);
+
+        // Handle stream errors
+        stream.on("error", err => {
+            console.error("Stream error:", err);
+            res.status(500).json({ error: "Error in streaming audio" });
+        });
     } catch (error) {
         console.error("Error streaming audio:", error);
         res.status(500).json({ error: "Failed to stream audio" });
