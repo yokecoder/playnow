@@ -149,25 +149,38 @@ router.get("/streamAudio", async (req, res) => {
 
         const url = `https://www.youtube.com/watch?v=${id}`;
 
-        // Get stream directly without fetching full info
+        // Fetch video info
+        const info = await ytdl.getInfo(url, { agent: YTDL_AGENT });
+
+        // Choose proper audio-only format
+        const audioFormat = ytdl.chooseFormat(info.formats, {
+            filter: f =>
+                f.mimeType.includes("audio/") && !f.videoCodec && f.audioCodec
+        });
+
+        if (!audioFormat) {
+            return res
+                .status(404)
+                .json({ error: "No valid audio format found" });
+        }
+
+        // Stream audio-only format
         const stream = ytdl(url, {
-            filter: "audioonly",
-            quality: "highestaudio",
+            format: audioFormat, 
             agent: YTDL_AGENT,
-            highWaterMark: 1 * 1024 * 1024 // Increase buffer to 1MB for stability
+            highWaterMark: 1 * 1024 * 1024 
         });
 
         // Set headers
-        res.setHeader("Content-Type", "audio/mp4");
-        res.setHeader("Content-Disposition", `inline; filename="${id}.mp4"`);
+        res.setHeader("Content-Type", audioFormat.mimeType);
+        res.setHeader("Content-Disposition", `inline; filename="${id}.webm"`);
 
-        // Pipe stream
         stream.pipe(res);
 
-        // Handle stream errors
+        // Handle errors
         stream.on("error", err => {
             console.error("Stream error:", err);
-            res.status(500).json({ error: "Error in streaming audio" });
+            res.status(500).json({ error: "Stream error" });
         });
     } catch (error) {
         console.error("Error streaming audio:", error);
