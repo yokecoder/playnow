@@ -144,47 +144,30 @@ router.get("/stream", (req, res) => {
 
 router.get("/streamAudio", async (req, res) => {
     try {
-        const id = req.query.id;
+        const { id } = req.query;
         if (!id) return res.status(400).json({ error: "Missing ID parameter" });
 
         const url = `https://www.youtube.com/watch?v=${id}`;
+        const info = await ytdl.getInfo(url);
 
-        // Fetch video info
-        const info = await ytdl.getInfo(url, { agent: YTDL_AGENT });
+        const audioFormats = info.formats
+            .filter(f => f.mimeType.includes("audio/") && f.audioCodec && !f.videoCodec)
+            .sort((a, b) => (b.audioBitrate || 0) - (a.audioBitrate || 0));
 
-        // Choose proper audio-only format
-        const audioFormat = ytdl.chooseFormat(info.formats, {
-            filter: f =>
-                f.mimeType.includes("audio/") && !f.videoCodec && f.audioCodec
-        });
+        const bestAudio = audioFormats.find(f => f.container === "webm") || audioFormats[0];
+        if (!bestAudio) return res.status(404).json({ error: "No valid audio format found" });
 
-        if (!audioFormat) {
-            return res
-                .status(404)
-                .json({ error: "No valid audio format found" });
-        }
+        const stream = ytdl(url, { format: bestAudio, highWaterMark: 1 * 1024 * 1024 });
 
-        // Stream audio-only format
-        const stream = ytdl(url, {
-            format: audioFormat, 
-            agent: YTDL_AGENT,
-            highWaterMark: 1 * 1024 * 1024 
-        });
-
-        // Set headers
-        res.setHeader("Content-Type", audioFormat.mimeType);
+        res.setHeader("Content-Type", bestAudio.mimeType || "audio/webm");
         res.setHeader("Content-Disposition", `inline; filename="${id}.webm"`);
 
         stream.pipe(res);
 
-        // Handle errors
-        stream.on("error", err => {
-            console.error("Stream error:", err);
-            res.status(500).json({ error: "Stream error" });
-        });
+        stream.on("error", err => !res.headersSent && res.status(500).json({ error: "Stream error" }));
+        req.on("close", () => !res.writableEnded && stream.destroy());
     } catch (error) {
-        console.error("Error streaming audio:", error);
-        res.status(500).json({ error: "Failed to stream audio" });
+        if (!res.headersSent) res.status(500).json({ error: "Failed to stream audio" });
     }
 });
 //information About a Playlist Url
