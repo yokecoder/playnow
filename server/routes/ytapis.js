@@ -4,7 +4,8 @@ const express = require("express");
 const axios = require("axios");
 const playdl = require("play-dl");
 const YTDL_AGENT = require("../ytdlagent.js");
-
+const { exec } = require("child_process");
+const { pipeline } = require("stream");
 const router = express.Router();
 //console.log(YTDL_AGENT);
 // Return all the data fectched
@@ -19,6 +20,21 @@ router.get("/info", async (req, res) => {
         res.json(info);
     } catch (error) {
         console.error("Error fetching video info:", error);
+        res.status(500).json(error);
+    }
+});
+
+router.get("/formats", async (req, res) => {
+    try {
+        const { url } = req.query;
+        if (!url) {
+            return res.status(400).json({ error: "Url parameter is required" });
+        }
+        const options = { agent: YTDL_AGENT };
+        const info = await ytdl.getInfo(url, options);
+        res.json(info.formats);
+    } catch (error) {
+        console.error("Error fetching video formats", error);
         res.status(500).json(error);
     }
 });
@@ -146,26 +162,66 @@ router.get("/streamAudio", async (req, res) => {
         if (!id) return res.status(400).json({ error: "Missing ID parameter" });
 
         const url = `https://www.youtube.com/watch?v=${id}`;
-        const info = await ytdl.getInfo(url, { agent: YTDL_AGENT });
 
-        const format = ytdl.chooseFormat(info.formats, {
-            filter: f =>
-                f.mimeType.includes("audio") && f.audioCodec && !f.videoCodec
-        });
+        exec(
+            `yt-dlp -f "bestaudio" --get-url "${url}"`,
+            async (error, stdout) => {
+                if (error) {
+                    console.error("yt-dlp error:", error);
+                    return res
+                        .status(500)
+                        .json({ error: "Failed to retrieve audio URL" });
+                }
 
-        res.setHeader("Content-Type", format.mimeType || "audio/webm");
-        res.setHeader("Content-Disposition", `inline; filename="${id}.webm"`);
+                const audioUrl = stdout.trim();
+                if (!audioUrl) {
+                    return res
+                        .status(500)
+                        .json({ error: "No audio URL found" });
+                }
 
-        ytdl(url, {
-            format,
-            agent: YTDL_AGENT,
-            highWaterMark: 1 * 1024 * 1024
-        }).pipe(res);
+                try {
+                    const response = await fetch(audioUrl);
+
+                    if (!response.ok)
+                        throw new Error("Failed to fetch audio stream");
+
+                    res.setHeader("Content-Type", "audio/webm");
+                    res.setHeader(
+                        "Content-Disposition",
+                        `inline; filename="${id}.webm"`
+                    );
+
+                    pipeline(response.body, res, err => {
+                        if (err) {
+                            console.error("Streaming error:", err);
+                            if (!res.headersSent)
+                                res.status(500).json({
+                                    error: "Streaming error"
+                                });
+                        }
+                    });
+
+                    // Handle unexpected stream closures
+                    res.on("close", () => {
+                        console.log("Client closed the connection");
+                    });
+                } catch (err) {
+                    console.error("Fetch error:", err);
+                    if (!res.headersSent)
+                        res.status(500).json({
+                            error: "Failed to fetch audio"
+                        });
+                }
+            }
+        );
     } catch (error) {
+        console.error("Server error:", error);
         if (!res.headersSent)
-            res.status(500).json({ error: "Failed to stream audio" });
+            res.status(500).json({ error: "Internal Server Error" });
     }
 });
+
 //information About a Playlist Url
 router.post("/playlistinfo", async (req, res) => {
     const url = req.body.url;
