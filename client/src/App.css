@@ -498,6 +498,7 @@ p {
     color: var(--background-color);
     font-size: 22px;
 }
+
 .playlist-container .music-list {
     flex: 1 0 auto;
     display: flex;
@@ -513,10 +514,9 @@ p {
 .search-result-songs .music-card {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: space-evenly;
     background-color: var(--primary-bg-color);
     transition: var(--transition);
-    gap: 10px;
     padding: 10px;
     max-height: 100px;
 }
@@ -550,7 +550,11 @@ p {
     flex-direction: column;
     overflow: hidden;
     white-space: nowrap;
-    width: 250px;
+    width: auto;
+    max-width: 180px;
+}
+.music-info-duration {
+    font-size: 12px;
 }
 
 .explore-section {

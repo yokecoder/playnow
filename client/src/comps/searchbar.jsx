@@ -131,7 +131,7 @@ export const MusicSearch = ({ hint, search, onChange, isOpen, onClose }) => {
                                     <div className="search-result-songs">
                                         <span className="title">Songs</span>
                                         {groupedResults?.song?.map(data => (
-                                            <>
+                                            <div className="music-list">
                                                 <div
                                                     key={data?.videoId}
                                                     className="music-card">
@@ -191,7 +191,7 @@ export const MusicSearch = ({ hint, search, onChange, isOpen, onClose }) => {
                                                         </span>
                                                     </div>
                                                 </div>
-                                            </>
+                                            </div>
                                         ))}
                                     </div>
                                 )}

@@ -14,16 +14,7 @@ export default function Music() {
     const [isPlaylistOpen, setPlaylistOpen] = useState(false);
     const [playlistId, setPlaylistId] = useState(null);
     const { currentTrack, addToQueue } = useTrackQueue();
-    useEffect(() => {
-  const pingServer = () => {
-    axios.get("https://playnow.onrender.com/").catch(() => {});
-  };
-
-  pingServer(); // Initial request
-  const interval = setInterval(pingServer, 30000); // Call every 30s
-
-  return () => clearInterval(interval); // Cleanup on unmount
-}, []);
+    
     const openPlaylist = id => {
         setPlaylistId(id);
         setPlaylistOpen(true);

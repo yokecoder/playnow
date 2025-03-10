@@ -24,7 +24,7 @@ export default function AudioPlayer({ trackId }) {
         if (!trackId) return null;
         try {
             const response = await axios.get(
-                `https://playnow.onrender.com/musicapis/ytmusic/track/${trackId}`
+                `https://server-playnow-production.up.railway.app/musicapis/ytmusic/track/${trackId}`
             );
             return response.data;
         } catch (error) {
@@ -167,7 +167,10 @@ export default function AudioPlayer({ trackId }) {
                 src={streamUrl}
                 ref={trackRef}
                 onTimeUpdate={handleTimeUpdate}
-                onLoadedMetadata={handleLoadedMetadata}
+                onLoadedMetadata={() => {
+                    handleLoadedMetadata();
+                    startAutoPlay();
+                }}
                 onEnded={skipToNext}
             />
 
@@ -484,7 +487,9 @@ export const Playlist = ({ playlistId, onClose }) => {
                                                     {vid?.channel?.name}
                                                 </span>
                                             </div>
+                                            
                                         </div>
+                                        <div className="music-info-duration">{vid?.durationRaw}</div>
                                         <div className="music-opts">
                                             <IconButton>
                                                 <MoreVertIcon className="icon-btn" />
