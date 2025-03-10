@@ -67,7 +67,6 @@ router.get("/dl", async (req, res) => {
         res.setHeader("Content-Type", "video/mp4");
 
         ytdl(url, {
-            filter: "videoandaudio",
             qualityLabel: resolution,
             highWaterMark: 32 * 1024,
             agent: YTDL_AGENT
@@ -128,7 +127,7 @@ router.get("/dlAudio", async (req, res) => {
 });
 
 //api for streaming allows to play third-party restricted videos
-router.get("/stream", (req, res) => {
+router.get("/stream", async (req, res) => {
     try {
         const { url, res: resolution = "480p" } = req.query;
 
@@ -140,13 +139,15 @@ router.get("/stream", (req, res) => {
 
         res.set({
             "Content-Type": "video/mp4",
-            "Cache-Control": "no-cache"
+            "Cache-Control": "no-cache",
+            Connection: "keep-alive"
         });
 
         ytdl(url, {
+            agent: YTDL_AGENT,
+            filter: "videoandaudio",
             qualityLabel: resolution,
-            highWaterMark: 16 * 512,
-            agent: YTDL_AGENT
+            highWaterMark: 24 * 1024
         }).pipe(res);
     } catch {
         res.status(500).json({ error: "Failed to stream video" });
