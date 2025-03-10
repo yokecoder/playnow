@@ -4,8 +4,6 @@ const express = require("express");
 const axios = require("axios");
 const playdl = require("play-dl");
 const YTDL_AGENT = require("../ytdlagent.js");
-const { exec } = require("child_process");
-const { pipeline } = require("stream");
 const router = express.Router();
 //console.log(YTDL_AGENT);
 // Return all the data fectched
@@ -146,7 +144,6 @@ router.get("/stream", (req, res) => {
         });
 
         ytdl(url, {
-            filter: "videoandaudio",
             qualityLabel: resolution,
             highWaterMark: 16 * 512,
             agent: YTDL_AGENT
@@ -163,65 +160,32 @@ router.get("/streamAudio", async (req, res) => {
 
         const url = `https://www.youtube.com/watch?v=${id}`;
 
-        exec(
-            `yt-dlp -f "bestaudio" --get-url "${url}"`,
-            async (error, stdout) => {
-                if (error) {
-                    console.error("yt-dlp error:", error);
-                    return res
-                        .status(500)
-                        .json({ error: "Failed to retrieve audio URL" });
-                }
+        // Validate video ID
+        if (!ytdl.validateURL(url)) {
+            return res.status(400).json({ error: "Invalid YouTube URL" });
+        }
 
-                const audioUrl = stdout.trim();
-                if (!audioUrl) {
-                    return res
-                        .status(500)
-                        .json({ error: "No audio URL found" });
-                }
+        // Set response headers
+        res.setHeader("Content-Type", "audio/webm");
+        res.setHeader("Content-Disposition", `inline; filename="${id}.webm"`);
+        res.setHeader("Accept-Ranges", "bytes"); // Allows seeking
 
-                try {
-                    const response = await fetch(audioUrl);
+        // Stream the audio
+        const stream = ytdl(url, {
+            agent: YTDL_AGENT,
+            filter: f =>
+                f.mimeType.includes("audio") && f.audioCodec && !f.videoCodec,
+            highWaterMark: 1 << 25 // 32MB buffer
+        });
 
-                    if (!response.ok)
-                        throw new Error("Failed to fetch audio stream");
-
-                    res.setHeader("Content-Type", "audio/webm");
-                    res.setHeader(
-                        "Content-Disposition",
-                        `inline; filename="${id}.webm"`
-                    );
-
-                    pipeline(response.body, res, err => {
-                        if (err) {
-                            console.error("Streaming error:", err);
-                            if (!res.headersSent)
-                                res.status(500).json({
-                                    error: "Streaming error"
-                                });
-                        }
-                    });
-
-                    // Handle unexpected stream closures
-                    res.on("close", () => {
-                        console.log("Client closed the connection");
-                    });
-                } catch (err) {
-                    console.error("Fetch error:", err);
-                    if (!res.headersSent)
-                        res.status(500).json({
-                            error: "Failed to fetch audio"
-                        });
-                }
-            }
-        );
+        stream.pipe(res);
+        res.on("close", () => stream.destroy()); // Cleanup stream on disconnect
     } catch (error) {
-        console.error("Server error:", error);
+        console.error("Streaming error:", error);
         if (!res.headersSent)
             res.status(500).json({ error: "Internal Server Error" });
     }
 });
-
 //information About a Playlist Url
 router.post("/playlistinfo", async (req, res) => {
     const url = req.body.url;
