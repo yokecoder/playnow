@@ -156,35 +156,29 @@ router.get("/stream", async (req, res) => {
 
 router.get("/streamAudio", async (req, res) => {
     try {
-        const { id } = req.query;
-        if (!id) return res.status(400).json({ error: "Missing ID parameter" });
+        const { url, quality = "highestaudio" } = req.query;
 
-        const url = `https://www.youtube.com/watch?v=${id}`;
-
-        // Validate video ID
-        if (!ytdl.validateURL(url)) {
-            return res.status(400).json({ error: "Invalid YouTube URL" });
+        if (!url || !ytdl.validateURL(url)) {
+            return res
+                .status(400)
+                .json({ error: "Invalid or missing YouTube URL" });
         }
 
-        // Set response headers
-        res.setHeader("Content-Type", "audio/webm");
-        res.setHeader("Content-Disposition", `inline; filename="${id}.webm"`);
-        res.setHeader("Accept-Ranges", "bytes"); // Allows seeking
-
-        // Stream the audio
-        const stream = ytdl(url, {
-            agent: YTDL_AGENT,
-            filter: f =>
-                f.mimeType.includes("audio") && f.audioCodec && !f.videoCodec,
-            highWaterMark: 1 << 25 // 32MB buffer
+        res.set({
+            "Content-Type": "audio/mp3",
+            "Cache-Control": "no-cache",
+            Connection: "keep-alive"
         });
 
-        stream.pipe(res);
-        res.on("close", () => stream.destroy()); // Cleanup stream on disconnect
-    } catch (error) {
-        console.error("Streaming error:", error);
-        if (!res.headersSent)
-            res.status(500).json({ error: "Internal Server Error" });
+        ytdl(url, {
+            agent: YTDL_AGENT,
+            filter: "audio",
+            quality: quality, // Default is 'highestaudio'
+            highWaterMark: 1 * 1024 * 1024 // 1MB buffer for smooth audio playback
+        }).pipe(res);
+    } catch (err) {
+        console.error("Stream Audio API Error:", err);
+        res.status(500).json({ error: "Failed to stream audio" });
     }
 });
 //information About a Playlist Url

@@ -159,19 +159,16 @@ export default function AudioPlayer({ trackId }) {
             window.removeEventListener("beforeunload", handleBeforeUnload);
         };
     }, []);
-    const streamUrl = `https://server-playnow-production.up.railway.app/ytapis/streamAudio?id=${trackId}`;
+    const streamUrl = `https://server-playnow-production.up.railway.app/ytapis/streamAudio?url=https://www.youtube.com/watch?v=${trackId}`;
 
     return (
         <>
             <audio
                 src={streamUrl}
                 ref={trackRef}
-                onLoadedMetadata={() => {
-                    handleLoadedMetadata();
-                    startAutoPlay();
-                }}
-                onEnded={skipToNext}
                 onTimeUpdate={handleTimeUpdate}
+                onLoadedMetadata={handleLoadedMetadata}
+                onEnded={skipToNext}
             />
 
             {miniPlayer ? (
