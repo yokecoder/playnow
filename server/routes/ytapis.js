@@ -79,7 +79,7 @@ router.get("/dlAudio", async (req, res) => {
                 .json({ status: false, msg: "Invalid or missing URL" });
         }
 
-        const videoInfo = await ytdl.getBasicInfo(url, { agent: YTDL_AGENT });
+        const videoInfo = await ytdl.getInfo(url, { agent: YTDL_AGENT });
 
         // Sanitize and format the filename
         let videoTitle = videoInfo.videoDetails.title
@@ -126,9 +126,7 @@ router.get("/stream", (req, res) => {
 
         res.set({
             "Content-Type": "video/mp4",
-            "Cache-Control": "no-cache",
-            Connection: "keep-alive",
-            "Transfer-Encoding": "chunked"
+            "Cache-Control": "no-cache"
         });
 
         ytdl(url, {
@@ -148,26 +146,24 @@ router.get("/streamAudio", async (req, res) => {
         if (!id) return res.status(400).json({ error: "Missing ID parameter" });
 
         const url = `https://www.youtube.com/watch?v=${id}`;
-        const info = await ytdl.getInfo(url);
+        const info = await ytdl.getInfo(url, { agent: YTDL_AGENT });
 
-        const audioFormats = info.formats
-            .filter(f => f.mimeType.includes("audio/") && f.audioCodec && !f.videoCodec)
-            .sort((a, b) => (b.audioBitrate || 0) - (a.audioBitrate || 0));
+        const format = ytdl.chooseFormat(info.formats, {
+            filter: f =>
+                f.mimeType.includes("audio") && f.audioCodec && !f.videoCodec
+        });
 
-        const bestAudio = audioFormats.find(f => f.container === "webm") || audioFormats[0];
-        if (!bestAudio) return res.status(404).json({ error: "No valid audio format found" });
-
-        const stream = ytdl(url, { format: bestAudio, highWaterMark: 1 * 1024 * 1024 });
-
-        res.setHeader("Content-Type", bestAudio.mimeType || "audio/webm");
+        res.setHeader("Content-Type", format.mimeType || "audio/webm");
         res.setHeader("Content-Disposition", `inline; filename="${id}.webm"`);
 
-        stream.pipe(res);
-
-        stream.on("error", err => !res.headersSent && res.status(500).json({ error: "Stream error" }));
-        req.on("close", () => !res.writableEnded && stream.destroy());
+        ytdl(url, {
+            format,
+            agent: YTDL_AGENT,
+            highWaterMark: 1 * 1024 * 1024
+        }).pipe(res);
     } catch (error) {
-        if (!res.headersSent) res.status(500).json({ error: "Failed to stream audio" });
+        if (!res.headersSent)
+            res.status(500).json({ error: "Failed to stream audio" });
     }
 });
 //information About a Playlist Url
