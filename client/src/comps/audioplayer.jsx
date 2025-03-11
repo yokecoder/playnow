@@ -54,6 +54,8 @@ export default function AudioPlayer({ trackId }) {
         const audio = trackRef.current;
         if (audio) {
             setAudioDuration(audio.duration || 0);
+            audio.load();
+            audio.play();
         }
     };
 
@@ -84,11 +86,6 @@ export default function AudioPlayer({ trackId }) {
             audio.pause();
         }
         setIsPlaying(!isPlaying);
-    };
-
-    const startAutoPlay = () => {
-        setIsPlaying(true);
-        trackRef.current.play();
     };
 
     useEffect(() => {
@@ -167,10 +164,7 @@ export default function AudioPlayer({ trackId }) {
                 src={streamUrl}
                 ref={trackRef}
                 onTimeUpdate={handleTimeUpdate}
-                onLoadedMetadata={() => {
-                    handleLoadedMetadata();
-                    startAutoPlay();
-                }}
+                onLoadedMetadata={handleLoadedMetadata}
                 onEnded={skipToNext}
             />
 
@@ -487,9 +481,10 @@ export const Playlist = ({ playlistId, onClose }) => {
                                                     {vid?.channel?.name}
                                                 </span>
                                             </div>
-                                            
                                         </div>
-                                        <div className="music-info-duration">{vid?.durationRaw}</div>
+                                        <div className="music-info-duration">
+                                            {vid?.durationRaw}
+                                        </div>
                                         <div className="music-opts">
                                             <IconButton>
                                                 <MoreVertIcon className="icon-btn" />
