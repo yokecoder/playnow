@@ -54,6 +54,7 @@ export default function AudioPlayer({ trackId }) {
         const audio = trackRef.current;
         if (audio) {
             setAudioDuration(audio.duration || 0);
+            setIsPlaying(true);
             audio.play();
         }
     };
@@ -79,7 +80,7 @@ export default function AudioPlayer({ trackId }) {
     const togglePlay = () => {
         const audio = trackRef.current;
         if (!audio) return;
- 
+
         if (!isPlaying) {
             audio.play();
         } else {

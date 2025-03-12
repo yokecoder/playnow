@@ -7,13 +7,53 @@ const router = express.Router();
 const ytmusic = new YTMusic();
 (async () => {
     try {
-        await ytmusic.initialize();
+        const cookies = [
+            { name: "YSC", value: "wtKBO-2MPTk" },
+            { name: "VISITOR_INFO1_LIVE", value: "jvqwDcKwR2Y" },
+            { name: "PREF", value: "f6=40000000&tz=Asia.Calcutta" },
+            { name: "SAPISID", value: "cgYE6Db8lyWdIXkT/Aq95i-XenlfbMVGYi" },
+            { name: "APISID", value: "d3cKjZfEDYGJCixX/AQdZ6lilLSPLbHWAJ" },
+            { name: "SSID", value: "APeELpgPd2A0tLdUJ" },
+            { name: "HSID", value: "A2OjpOunTAGC0Bz4X" },
+            {
+                name: "SID",
+                value: "g.a000uQhIujuAisuvZTGF40187HWFDuoTAUMQ7gLrkx8R4hc7d2bvHvQToKOi9f0H1yXqoBWJSwACgYKAfcSARMSFQHGX2Mi0FafHzBuOl1xhANnzMN44xoVAUF8yKo5mp35hb8zL3MyK7ehRB6_0076"
+            },
+            {
+                name: "LOGIN_INFO",
+                value: "AFmmF2swRAIgXgzlpiWUXQI5BcYnpK2rp-6dbDzO1TQr1MccQT2FoZcCICwHci1C3W4rzrfHdMYuV8EWYSZ178lj0wEV5C2y2vf2:QUQ3MjNmeTFEME1sTUVvYXNpZjBCOTdEeWlOVk5qdjl6Q21tZFNRalY2SXRweEFJZmFKdGZSSFZhWVRVbko1RERDTnhEX2hfZkdZeGxwWlhnOGdGSnBlWDd3VTNaUTJ3emRGQzFQQ1RpdGk4TG5Ga0ZldHNZSFpOM2otVUtHQ25qcFNMUVExYUFVLUtwQ1lHOWZEcnJtYlRtenQzZGlRNUNB"
+            },
+            {
+                name: "__Secure-3PAPISID",
+                value: "cgYE6Db8lyWdIXkT/Aq95i-XenlfbMVGYi"
+            },
+            {
+                name: "__Secure-3PSID",
+                value: "g.a000uQhIujuAisuvZTGF40187HWFDuoTAUMQ7gLrkx8R4hc7d2bvFC3K4w1-VVi3LT9i2D9y2AACgYKAQMSARMSFQHGX2MiNWZI1R8XwpQMLKUhdXvnExoVAUF8yKraOjYV65xG7vPrdCxY76kw0076"
+            },
+            {
+                name: "__Secure-3PSIDCC",
+                value: "AKEyXzUyryPUiYTO03yg_3yZ0G_H29dv8Gesywt5pAxLGOPJMcsRMvWsmlY1Wu8pp75Uz394"
+            },
+            {
+                name: "SIDCC",
+                value: "AKEyXzUXePwbLFP7ih6iTfzNfRvBkwEoXVUBvdgooE2MUFXS8tMLx1YlsuvEfhmiXEGBfngf"
+            }
+        ];
+
+        // Convert cookies array to a single cookie string
+        const cookieString = cookies
+            .map(cookie => `${cookie.name}=${cookie.value}`)
+            .join("; ");
+
+        // Initialize ytmusic with the cookies
+        ytmusic.initialize(cookieString);
+
         console.log("YTMusic API initialized successfully with cookies!");
     } catch (error) {
         console.error("YTMusic API initialization failed:", error);
     }
 })();
-
 
 // Search for Music
 router.get("/ytmusic/search", async (req, res) => {
@@ -30,13 +70,10 @@ router.get("/ytmusic/search", async (req, res) => {
 
         res.json(results);
     } catch (error) {
-        
         console.error("Error in search:", error.message);
         res.status(500).json(error);
     }
 });
-
-
 
 // Get Song Details
 router.get("/ytmusic/track/:id", async (req, res) => {
@@ -47,7 +84,6 @@ router.get("/ytmusic/track/:id", async (req, res) => {
         res.status(500).json(error);
     }
 });
-
 
 router.get("/ytmusic/playlist/:id", async (req, res) => {
     try {
