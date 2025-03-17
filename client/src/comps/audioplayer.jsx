@@ -369,7 +369,7 @@ export const Playlist = ({ playlistId, onClose }) => {
         const videos = playlistInfo?.videos;
         if (!videos || videos.length === 0) return;
         clearTrackQueue();
-        addToQueue(videos[0].id); // Play the first
+        setCurrentTrack(videos[0].id); // Play the first
         videos.slice(1).forEach((vid, idx) => {
             setTimeout(() => addToLast(vid.id), idx * 999); // Maintain order properly
         });
