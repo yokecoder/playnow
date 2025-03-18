@@ -182,6 +182,10 @@ export const MusicSearch = ({ hint, search, onChange, isOpen, onClose }) => {
                                                         <span>
                                                             {data?.name
                                                                 ?.trim()
+                                                                .replace(
+                                                                    /\|$/,
+                                                                    ""
+                                                                )
                                                                 .split(/\s+/)
                                                                 .slice(0, 6)
                                                                 .join(" ")}

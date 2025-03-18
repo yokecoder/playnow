@@ -22,11 +22,16 @@ body {
     background-color: var(--background-color);
     color: var(--text-color);
     height: auto;
-    overflow: hidden;
+    overflow: auto;
     font-family: Poppins;
     transition: var(--transition);
     user-select: none;
     webkit-user-select: none;
+    scrollbar-width: none; /* For Firefox */
+    -ms-overflow-style: none;
+}
+body::-webkit-scrollbar {
+    display: none;
 }
 
 span,
@@ -125,15 +130,26 @@ p {
     color: inherit;
     height: 100vh;
     overflow: auto;
+    scrollbar-width: none; /* For Firefox */
+    -ms-overflow-style: none;
     transition: var(--transition);
+}
+.app-layout::-webkit-scrollbar {
+    display: none !important;
 }
 /* Design of individual routes */
 .page-layout {
     display: flex;
     flex-direction: column;
     flex: 1 1 auto;
-    margin-bottom: 40px;
+    margin-bottom: 50px;
     padding-bottom: 6px;
+    overflow: auto;
+    scrollbar-width: none; /* For Firefox */
+    -ms-overflow-style: none;
+}
+.page-layout::-webkit-scrollbar {
+    display: none;
 }
 /*Styles for Top Navigation Bar*/
 .top-nav {
@@ -323,9 +339,10 @@ p {
     font-size: 20px;
 }
 .audio-player .audio-thumbnail {
-    height: 200px;
+    border-radius: 12px;
+    height: 150px;
     width: 200px;
-    object-fit: contain;
+    object-fit: cover;
 }
 .audio-player .audio-progress {
     display: flex;
@@ -335,61 +352,29 @@ p {
     margin: 15px;
     gap: 5px;
 }
-
 .audio-player .progress-input {
-    width: 70vw;
-    max-width: 400px;
+    width: 100%;
+    height: 3px;
+    border-radius: 5px;
     appearance: none;
-    height: 6px;
-    border-radius: 6px;
-    background: rgba(255, 255, 255, 0.2);
-    outline: none !important;
-    border: none !important;
-    transition: background 0.5s;
-    cursor: pointer;
+    -webkit-appearance: none;
+    overflow: hidden; /* Hide overflow for rounded corners */
+    background: var(--text-color);
 }
 
-/* Progress bar fill (for WebKit browsers) */
-.audio-player .progress-input::-webkit-slider-runnable-track {
-    height: 6px;
-    background: var(--text-color, #1db954);
-    border-radius: 6px;
+.audio-player .progress-input::-webkit-progress-bar {
+    background-color: var(--text-color);
+    border-radius: 5px;
 }
 
-/* Progress bar thumb (for WebKit browsers) */
-.audio-player .progress-input::-webkit-slider-thumb {
-    appearance: none;
-    width: 12px;
-    height: 12px;
-    background: var(--text-color, #1db954);
-    border-radius: 50%;
-    margin-top: -3px;
-    cursor: pointer;
-    transition: transform 0.2s;
+.audio-player .progress-input::-webkit-progress-value {
+    background-color: var(--background-color);
+    border-radius: 5px;
 }
 
-.audio-player .progress-input::-webkit-slider-thumb:hover {
-    transform: scale(1.2);
-}
-
-/* Firefox support */
-.audio-player .progress-input::-moz-range-track {
-    height: 6px;
-    background: var(--accent-color, #1db954);
-    border-radius: 6px;
-}
-
-.audio-player .progress-input::-moz-range-thumb {
-    width: 12px;
-    height: 12px;
-    background: var(--accent-color, #1db954);
-    border-radius: 50%;
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-
-.audio-player .progress-input::-moz-range-thumb:hover {
-    transform: scale(1.2);
+.audio-player .progress-input::-moz-progress-bar {
+    background-color: var(--background-color);
+    border-radius: 5px;
 }
 
 .audio-player .controls {
@@ -401,8 +386,15 @@ p {
     color: var(--text-color) !important;
 }
 .audio-player .control-btn-icon {
-    height: 50px !important ;
-    width: 50px !important;
+    height: 48px !important ;
+    width: 48px !important;
+}
+.audio-player .control-btn-icon-top {
+    font-size: 35px;
+    padding: 5px;
+    margin: 5px;
+    border-radius: 50%;
+    background: var(--primary-bg-color);
 }
 
 /* Popup audio player styles */
@@ -436,6 +428,7 @@ p {
 .audio-player-mini .info {
     display: flex;
     flex-direction: column;
+    min-width: 150px;
     max-width: 150px;
     overflow: hidden;
     white-space: nowrap;
@@ -503,8 +496,10 @@ p {
 }
 
 .playlist-container .thumbnail {
-    height: 100px;
-    width: 150px;
+    height: 150px;
+    width: 200px;
+    object-fit: cover;
+    border-radius: 12px;
 }
 .playlist-container .title {
     font-size: 18px;
@@ -512,8 +507,12 @@ p {
     text-align: center;
 }
 .playlist-container .icons-top {
+    font-size: 35px;
+    padding: 8px;
+    margin-top: 8px;
+    border-radius: 50%;
+    background: var(--background-color);
     color: var(--text-color);
-    font-size: 60px !important;
 }
 
 .playlist-container .playlist-ctrls {
@@ -556,7 +555,7 @@ p {
     overflow-y: auto;
     padding-bottom: 250px;
 }
-.music-list .music-card,
+.playlist-container .music-list .music-card,
 .search-result-songs .music-card {
     display: flex;
     align-items: center;
@@ -564,7 +563,7 @@ p {
     background-color: var(--primary-bg-color);
     transition: var(--transition);
     padding: 10px;
-    max-height: 100px;
+    height: 100px;
 }
 
 .music-list .music-card:active,
@@ -590,14 +589,13 @@ p {
     border-radius: 10px;
 }
 
-.music-list .music-info-ttl,
-.search-result-songs .music-info-ttl {
+.music-list .music-info-ttl {
     display: flex;
     flex-direction: column;
     overflow: hidden;
     white-space: nowrap;
-    width: auto;
-    max-width: 180px;
+    width: 200px;
+    font-size: 1em;
 }
 .music-info-duration {
     font-size: 12px;
@@ -623,6 +621,12 @@ p {
     padding: 10px;
     overflow-y: hidden;
     overflow-x: scroll;
+    scrollbar-width: none; /* For Firefox */
+    -ms-overflow-style: none; /* For Internet Explorer and Edge */
+}
+
+.explore-section .carousel::-webkit-scrollbar {
+    display: none; /* For Chrome, Safari, and Opera */
 }
 
 .carousel-card-1 {
@@ -705,6 +709,18 @@ p {
     height: auto;
     max-height: 50vh;
 }
+.search-result-songs {
+    display: flex;
+    flex-direction: column;
+}
+.search-result-songs .music-list {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.search-result-songs .music-card {
+    max-height: 60px;
+}
 .music-search-container .result-card {
     display: flex;
     align-items: center;
@@ -742,7 +758,12 @@ p {
 .music-explore-container {
     display: flex;
     flex-direction: column;
-    min-height: 65vh;
+    max-height: 65vh;
     padding-bottom: 100px;
     overflow: auto;
+    scrollbar-width: none; /* For Firefox */
+    -ms-overflow-style: none; 
+}
+.music-explore-container::-webkit-scrollbar {
+    display: none;
 }

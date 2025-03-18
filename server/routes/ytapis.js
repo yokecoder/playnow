@@ -172,7 +172,6 @@ router.get("/streamAudio", async (req, res) => {
 
         ytdl(url, {
             agent: YTDL_AGENT,
-            filter: "audio",
             quality: quality, // Default is 'highestaudio'
             highWaterMark: 24 * 1024 // 1MB buffer for smooth audio playback
         }).pipe(res);

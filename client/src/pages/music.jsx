@@ -13,8 +13,8 @@ export default function Music() {
     const [isSearchOpen, setSearchOpen] = useState(false);
     const [isPlaylistOpen, setPlaylistOpen] = useState(false);
     const [playlistId, setPlaylistId] = useState(null);
-    const { currentTrack, addToQueue } = useTrackQueue();
-    
+    const { currentTrack, addToQueue, setCurrentTrack } = useTrackQueue();
+
     const openPlaylist = id => {
         setPlaylistId(id);
         setPlaylistOpen(true);
@@ -51,6 +51,17 @@ export default function Music() {
         return acc;
     }, {});
 
+    const handleExplorePlay = data => {
+        if (data?.type === "PLAYLIST" || data?.type === "ALBUM") {
+            if (data?.playlistId) {
+                openPlaylist(data?.playlistId);
+            }
+        } else if (data?.type === "VIDEO" || data?.type === "SONG") {
+            if (data?.videoId) {
+                setCurrentTrack(data?.videoId);
+            }
+        }
+    };
     //useEffect(() => console.log(exploreData), []);
     return (
         <>
@@ -86,6 +97,9 @@ export default function Music() {
                                                 desc={`${data.type?.toLowerCase()} • ${
                                                     data.artist?.name
                                                 }`}
+                                                handlePlay={() =>
+                                                    handleExplorePlay(data)
+                                                }
                                             />
                                         )
                                 )}
@@ -109,6 +123,9 @@ export default function Music() {
                                                 desc={`${data.type?.toLowerCase()} • ${
                                                     data.artist?.name
                                                 }`}
+                                                handlePlay={() =>
+                                                    handleExplorePlay(data)
+                                                }
                                             />
                                         )
                                 )}
@@ -132,6 +149,9 @@ export default function Music() {
                                                 desc={`${data.type?.toLowerCase()} • ${
                                                     data.artist?.name
                                                 }`}
+                                                handlePlay={() =>
+                                                    handleExplorePlay(data)
+                                                }
                                             />
                                         )
                                 )}
@@ -154,6 +174,9 @@ export default function Music() {
                                                 desc={`${data.type?.toLowerCase()} • ${
                                                     data.artist?.name
                                                 }`}
+                                                handlePlay={() =>
+                                                    handleExplorePlay(data)
+                                                }
                                             />
                                         )
                                 )}

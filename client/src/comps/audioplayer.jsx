@@ -7,6 +7,8 @@ import PauseIcon from "@mui/icons-material/Pause";
 import SkipNextIcon from "@mui/icons-material/SkipNext";
 import SkipPreviousIcon from "@mui/icons-material/SkipPrevious";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import ArrowDropDownOutlinedIcon from "@mui/icons-material/ArrowDropDownOutlined";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import useTrackQueue from "../utils/queue_manager.jsx";
 
@@ -49,14 +51,13 @@ export default function AudioPlayer({ trackId }) {
             "0"
         )}`;
     };
-
     const handleLoadedMetadata = () => {
         const audio = trackRef.current;
-        if (audio) {
-            setAudioDuration(audio.duration || 0);
-            setIsPlaying(true);
-            audio.play();
-        }
+        if (!audio) return;
+
+        setAudioDuration(audio.duration || 0);
+        setIsPlaying(true);
+        audio.play().catch(err => console.warn("Autoplay blocked:", err));
     };
 
     const handleTimeUpdate = () => {
@@ -71,6 +72,7 @@ export default function AudioPlayer({ trackId }) {
     const handleSeek = e => {
         const audio = trackRef.current;
         if (!audio) return;
+
         const newTime = (e.target.value / 100) * (audio.duration || 1);
         audio.currentTime = newTime;
         setCurrentTime(newTime);
@@ -82,15 +84,19 @@ export default function AudioPlayer({ trackId }) {
         if (!audio) return;
 
         if (!isPlaying) {
-            audio.play();
+            audio.play().catch(err => console.warn("Play failed:", err));
         } else {
             audio.pause();
         }
         setIsPlaying(!isPlaying);
     };
 
+    // Handle media session updates
     useEffect(() => {
-        if (!trackRef.current) return;
+        if (!trackRef.current || !trackInfo) return;
+
+        const audio = trackRef.current;
+
         if ("mediaSession" in navigator) {
             navigator.mediaSession.metadata = new MediaMetadata({
                 title: trackInfo?.name || "Unknown Title",
@@ -111,62 +117,88 @@ export default function AudioPlayer({ trackId }) {
                 ]
             });
 
-            const audio = trackRef.current;
             navigator.mediaSession.setActionHandler("play", () => {
                 audio.play();
                 setIsPlaying(true);
             });
+
             navigator.mediaSession.setActionHandler("pause", () => {
                 audio.pause();
                 setIsPlaying(false);
             });
-            navigator.mediaSession.setActionHandler("seekbackward", details => {
-                audio.currentTime = Math.max(
-                    audio.currentTime - (details.seekOffset || 10),
-                    0
-                );
-            });
-            navigator.mediaSession.setActionHandler("seekforward", details => {
-                audio.currentTime = Math.min(
-                    audio.currentTime + (details.seekOffset || 10),
-                    audio.duration || 0
-                );
-            });
-            navigator.mediaSession.setActionHandler("seekto", details => {
-                if (details.seekTime !== undefined) {
-                    audio.currentTime = details.seekTime;
+
+            navigator.mediaSession.setActionHandler(
+                "seekbackward",
+                ({ seekOffset = 10 }) => {
+                    audio.currentTime = Math.max(
+                        audio.currentTime - seekOffset,
+                        0
+                    );
                 }
-            });
+            );
+
+            navigator.mediaSession.setActionHandler(
+                "seekforward",
+                ({ seekOffset = 10 }) => {
+                    audio.currentTime = Math.min(
+                        audio.currentTime + seekOffset,
+                        audio.duration || 0
+                    );
+                }
+            );
+
+            navigator.mediaSession.setActionHandler(
+                "seekto",
+                ({ seekTime }) => {
+                    if (seekTime !== undefined) audio.currentTime = seekTime;
+                }
+            );
+
             navigator.mediaSession.setActionHandler("stop", () => {
                 audio.pause();
                 audio.currentTime = 0;
                 setIsPlaying(false);
             });
-        }
-    }, [trackRef, trackId, trackInfo]);
 
+            navigator.mediaSession.setActionHandler("nexttrack", skipToNext);
+            navigator.mediaSession.setActionHandler(
+                "previoustrack",
+                skipToPrevious
+            );
+        }
+    }, [trackInfo, skipToNext, skipToPrevious]);
+
+    // Handle track source updates
+    useEffect(() => {
+        if (!trackRef.current || !trackId) return;
+        trackRef.current.src = `https://server-playnow-production.up.railway.app/ytapis/streamAudio?url=https://www.youtube.com/watch?v=${trackId}`;
+    }, [trackId]);
+
+    // Handle page unload cleanup
     useEffect(() => {
         const audio = trackRef.current;
         if (!audio) return;
+
         const handleBeforeUnload = () => {
             audio.pause();
-            audio.src = "";
         };
+
         window.addEventListener("beforeunload", handleBeforeUnload);
         return () => {
             window.removeEventListener("beforeunload", handleBeforeUnload);
         };
     }, []);
-    const streamUrl = `https://server-playnow-production.up.railway.app/ytapis/streamAudio?url=https://www.youtube.com/watch?v=${trackId}`;
+
+    //const streamUrl = `https://server-playnow-production.up.railway.app/ytapis/streamAudio?url=https://www.youtube.com/watch?v=${trackId}`;
 
     return (
         <>
             <audio
-                src={streamUrl}
                 ref={trackRef}
                 onTimeUpdate={handleTimeUpdate}
                 onLoadedMetadata={handleLoadedMetadata}
                 onEnded={skipToNext}
+                playsInline
             />
 
             {miniPlayer ? (
@@ -205,7 +237,7 @@ export default function AudioPlayer({ trackId }) {
                         <IconButton
                             onClick={() => setMiniPlayer(true)}
                             className="control-btn">
-                            <ArrowDropDownIcon className="control-btn-icon" />
+                            <KeyboardArrowDownIcon className="control-btn-icon-top" />
                         </IconButton>
                     </div>
                     <div className="info">
@@ -222,7 +254,13 @@ export default function AudioPlayer({ trackId }) {
                                     }
                                     alt="thumbnail"
                                 />
-                                <span>{trackInfo?.name}</span>
+                                <span>
+                                    {trackInfo?.name
+                                        ?.trim()
+                                        .split(/\s+/)
+                                        .slice(0, 5)
+                                        .join(" ")}
+                                </span>
                                 <span>{trackInfo?.artist?.name}</span>
                             </>
                         ) : (
@@ -231,7 +269,7 @@ export default function AudioPlayer({ trackId }) {
                     </div>
                     <div className="audio-progress">
                         <span>{formatTime(currentTime)}</span>
-                        <input
+                        <progress
                             className="progress-input"
                             type="range"
                             min="0"
@@ -239,7 +277,9 @@ export default function AudioPlayer({ trackId }) {
                             value={isNaN(progress) ? 0 : progress}
                             onChange={handleSeek}
                         />
-                        <span>{formatTime(audioDuration)}</span>
+                        <span>
+                            {formatTime(trackInfo?.duration ?? audioDuration)}
+                        </span>
                     </div>
                     <div className="controls">
                         <IconButton
@@ -343,19 +383,17 @@ export const Playlist = ({ playlistId, onClose }) => {
         setCurrentTrack
     } = useTrackQueue();
 
+    // Fetch playlist info
     const fetchPlaylistInfo = async () => {
-        if (!playlistId) return;
-
+        if (!playlistId) return null;
         try {
-            const response = await axios.get(
+            const { data } = await axios.get(
                 `https://server-playnow-production.up.railway.app/musicapis/ytmusic/playlist/${playlistId}`
             );
-            if (response.data) {
-                return response.data;
-            }
+            return data;
         } catch (error) {
             console.error("Error fetching playlist info:", error);
-            return;
+            return null;
         }
     };
 
@@ -365,21 +403,21 @@ export const Playlist = ({ playlistId, onClose }) => {
         enabled: !!playlistId,
         cacheTime: 1000 * 60 * 30
     });
-    const autoQueuePlaylist = () => {
-        const videos = playlistInfo?.videos;
-        if (!videos || videos.length === 0) return;
-        clearTrackQueue();
-        setCurrentTrack(videos[0].id); // Play the first
-        videos.slice(1).forEach((vid, idx) => {
-            setTimeout(() => addToLast(vid.id), idx * 999); // Maintain order properly
-        });
-    };
 
-    /* 
-    Default function when the arrow down button is clicked 
-    and onClose function is not defined.
-  */
-    const closePlaylist = () => setVisible(false);
+    // Auto queue and play the first track
+    const autoQueuePlaylist = () => {
+        if (!playlistInfo?.videos?.length) return;
+
+        clearTrackQueue();
+
+        const [firstTrack, ...remainingTracks] = playlistInfo.videos;
+
+        // Play the first track immediately
+        setCurrentTrack(firstTrack.id);
+
+        // Add the rest of the tracks to the queue
+        remainingTracks.forEach(vid => addToLast(vid.id));
+    };
 
     return (
         <>
@@ -393,36 +431,37 @@ export const Playlist = ({ playlistId, onClose }) => {
                     )}
 
                     {/* Playlist UI */}
-                    {!isLoading && (
+                    {!isLoading && playlistInfo && (
                         <>
                             <div className="top-ctrls">
                                 <IconButton
                                     className="top-ctrl-btn"
-                                    onClick={onClose ? onClose : closePlaylist}>
-                                    <ArrowDropDownIcon className="icons-top" />
+                                    onClick={
+                                        onClose || (() => setVisible(false))
+                                    }>
+                                    <KeyboardArrowDownIcon className="icons-top" />
                                 </IconButton>
                             </div>
 
+                            {/* Playlist Info */}
                             <div className="playlist-info">
-                                {playlistInfo && (
-                                    <>
-                                        <img
-                                            className="thumbnail"
-                                            src={
-                                                playlistInfo?.thumbnail?.url ||
-                                                playlistInfo?.videos?.[0]
-                                                    ?.thumbnail?.url
-                                            }
-                                            alt="Playlist Thumbnail"
-                                        />
-                                        <span className="title">
-                                            {playlistInfo?.title}
-                                        </span>
-                                        <span>
-                                            {playlistInfo?.channel?.name}
-                                        </span>
-                                    </>
-                                )}
+                                <img
+                                    className="thumbnail"
+                                    src={
+                                        playlistInfo.thumbnail?.url ||
+                                        playlistInfo.videos?.[0]?.thumbnail?.url
+                                    }
+                                    alt="Playlist Thumbnail"
+                                />
+                                <span className="title">
+                                    {playlistInfo.title
+                                        ?.trim()
+                                        .split(/\s+/)
+                                        .slice(0, 6)
+                                        .join(" ")}
+                                </span>
+                                <span>{playlistInfo.channel?.name}</span>
+
                                 <div className="playlist-ctrls">
                                     <div
                                         onClick={autoQueuePlaylist}
@@ -435,8 +474,9 @@ export const Playlist = ({ playlistId, onClose }) => {
                                 </div>
                             </div>
 
+                            {/* Playlist Tracks */}
                             <div className="music-list">
-                                {playlistInfo?.videos?.map(vid => (
+                                {playlistInfo.videos.map(vid => (
                                     <div key={vid.id} className="music-card">
                                         <div className="music-info">
                                             <IconButton className="thumbnail">
@@ -477,14 +517,19 @@ export const Playlist = ({ playlistId, onClose }) => {
                                                 )}
                                             </IconButton>
                                             <div className="music-info-ttl">
-                                                <span>{vid?.title}</span>
                                                 <span>
-                                                    {vid?.channel?.name}
+                                                    {vid.title
+                                                        ?.trim()
+                                                        .replace(/\|$/, "")
+                                                        .split(/\s+/)
+                                                        .slice(0, 6)
+                                                        .join(" ")}
                                                 </span>
+                                                <span>{vid.channel?.name}</span>
                                             </div>
                                         </div>
                                         <div className="music-info-duration">
-                                            {vid?.durationRaw}
+                                            {vid.durationRaw}
                                         </div>
                                         <div className="music-opts">
                                             <IconButton>
